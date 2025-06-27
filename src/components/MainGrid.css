@@ -331,3 +331,78 @@
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
 }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main-grid {
+    padding: 1rem;
+  }
+  
+  /* Single column layout on mobile */
+  .tile-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    gap: var(--spacing-md);
+    padding: var(--spacing-sm);
+  }
+  
+  /* Force all tools to span full width and auto height */
+  .tool-tile {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    width: 100% !important;
+    min-height: 300px;
+  }
+  
+  /* Adjust tool headers for mobile */
+  .tool-header {
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .tool-title {
+    font-size: var(--font-size-base);
+  }
+  
+  /* Adjust tool content padding */
+  .tool-content {
+    padding: var(--spacing-md);
+  }
+  
+  /* Hide resize handle on mobile since we force full width */
+  .tool-resize {
+    display: none;
+  }
+  
+  /* Adjust drop zones for mobile */
+  .tile-drop-zone {
+    min-height: 60px;
+    margin-bottom: var(--spacing-sm);
+  }
+}
+
+@media (max-width: 480px) {
+  .main-grid {
+    padding: 0.5rem;
+  }
+  
+  .tile-grid {
+    padding: var(--spacing-xs);
+    gap: var(--spacing-sm);
+  }
+  
+  .tool-tile {
+    min-height: 250px;
+  }
+  
+  .tool-header {
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .tool-content {
+    padding: var(--spacing-sm);
+  }
+  
+  .tool-title {
+    font-size: var(--font-size-sm);
+  }
+}

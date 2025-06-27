@@ -537,13 +537,24 @@ textarea.form-input {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .form-grid {
-    grid-template-columns: 1fr;
+  .medicine-reminder {
+    gap: var(--spacing-sm);
   }
   
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .add-medicine-form {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  /* Optimize pill organizer for full width */
   .organizer-header,
   .day-row {
-    grid-template-columns: 80px repeat(3, 1fr);
+    grid-template-columns: 100px repeat(3, 1fr);
   }
   
   .day-label,
@@ -552,9 +563,14 @@ textarea.form-input {
     font-size: var(--font-size-sm);
   }
   
+  .pill-slot {
+    min-height: 70px;
+    padding: var(--spacing-xs);
+  }
+  
   .pill {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
   }
   
   .pill-label {
@@ -562,13 +578,14 @@ textarea.form-input {
   }
   
   .pill-dosage {
-    font-size: 8px;
+    font-size: 9px;
   }
   
   .medicine-summary {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
   }
   
   .medicine-info {
@@ -577,10 +594,11 @@ textarea.form-input {
   
   .form-actions {
     justify-content: stretch;
+    flex-direction: column;
   }
   
   .form-actions .btn {
-    flex: 1;
+    width: 100%;
   }
   
   .modal-overlay {
@@ -589,6 +607,7 @@ textarea.form-input {
   
   .modal-content {
     max-height: 95vh;
+    margin: var(--spacing-sm);
   }
   
   .modal-header {
@@ -601,9 +620,25 @@ textarea.form-input {
 }
 
 @media (max-width: 480px) {
+  .add-medicine-form {
+    padding: var(--spacing-sm);
+  }
+  
+  /* Make pill organizer more compact on small screens */
   .organizer-header,
   .day-row {
-    grid-template-columns: 60px repeat(3, 1fr);
+    grid-template-columns: 80px repeat(3, 1fr);
+  }
+  
+  .day-label,
+  .time-header {
+    padding: var(--spacing-xs);
+    font-size: var(--font-size-xs);
+  }
+  
+  .pill-slot {
+    min-height: 60px;
+    padding: 2px;
   }
   
   .pill {
@@ -621,10 +656,29 @@ textarea.form-input {
   
   .time-slots {
     flex-direction: column;
+    gap: var(--spacing-xs);
   }
   
   .time-slot-btn {
     text-align: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+  
+  .medicine-list {
+    padding: var(--spacing-sm);
+  }
+  
+  .medicine-summary {
+    padding: var(--spacing-xs);
+  }
+  
+  .modal-content {
+    margin: var(--spacing-xs);
+  }
+  
+  .modal-header,
+  .modal-body {
+    padding: var(--spacing-sm);
   }
 }
 
