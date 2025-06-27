@@ -6,7 +6,7 @@ import MarketListMaker from './tools/MarketListMaker'
 import MedicineReminder from './tools/MedicineReminder'
 import NotesSection from './tools/NotesSection'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTimes, faGripVertical, faExpandArrowsAlt } from '@fortawesome/free-solid-svg-icons'
+import { faTimes, faGripVertical, faExpandArrowsAlt, faTrash } from '@fortawesome/free-solid-svg-icons'
 
 const toolComponents = {
   'market-list': MarketListMaker,
@@ -80,7 +80,7 @@ function ResizeSelector({ isOpen, onClose, onResize, currentWidth = 2, currentHe
 }
 
 // Draggable Tool Component
-function DraggableTool({ tool, index, onMove, onResize }) {
+function DraggableTool({ tool, index, onMove, onResize, onRemove }) {
   const [showResizeSelector, setShowResizeSelector] = useState(false)
   
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -139,6 +139,13 @@ function DraggableTool({ tool, index, onMove, onResize }) {
               title="Resize tool"
             >
               <FontAwesomeIcon icon={faExpandArrowsAlt} />
+            </button>
+            <button
+              className="tool-control-btn tool-remove-btn"
+              onClick={() => onRemove(tool.id)}
+              title="Remove tool"
+            >
+              <FontAwesomeIcon icon={faTrash} />
             </button>
           </div>
         </div>
@@ -348,6 +355,7 @@ function MainGrid({ tools, onRemoveTool, onUpdateTool }) {
                 index={index}
                 onMove={handleDrop}
                 onResize={handleResize}
+                onRemove={onRemoveTool}
               />
             ) : null
           )}

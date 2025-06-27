@@ -1,6 +1,6 @@
 /* Main Grid Layout */
 .main-grid {
-  padding: var(--spacing-lg);
+  padding: 2rem;
   min-height: 100vh;
   background: var(--background-color);
 }
@@ -15,9 +15,8 @@
 .tile-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(8, 180px);
+  grid-template-rows: repeat(8, 400px);
   gap: var(--spacing-sm);
-  max-width: 1000px;
   margin: 0 auto;
   background: var(--surface-color);
   padding: var(--spacing-md);
@@ -192,6 +191,11 @@
 .tool-control-btn:hover {
   background-color: var(--background-color);
   color: var(--text-color);
+}
+
+.tool-remove-btn:hover {
+  background-color: var(--error-color) !important;
+  color: white !important;
 }
 
 /* Resize Selector */
