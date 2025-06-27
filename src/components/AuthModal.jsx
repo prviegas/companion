@@ -51,12 +51,15 @@ function AuthModal({ onClose, showCloseButton = true }) {
     <div className="auth-modal-backdrop" onClick={handleBackdropClick}>
       <div className="auth-modal">
         <div className="auth-modal-header">
-          <h2 className="auth-modal-title">
-            {isLogin ? 'Welcome Back!' : 'Create Account'}
-          </h2>
+          <div className="auth-header-content">
+            <h2 className="auth-modal-title">Welcome to Companion</h2>
+            <p className="auth-header-subtitle">
+              {isLogin ? 'Sign in to your account' : 'Create your account'}
+            </p>
+          </div>
           {showCloseButton && (
             <button
-              className="btn btn-secondary"
+              className="auth-modal-close"
               onClick={onClose}
               aria-label="Close authentication modal"
             >
@@ -68,7 +71,7 @@ function AuthModal({ onClose, showCloseButton = true }) {
         <div className="auth-modal-content">
           <p className="auth-description">
             {isLogin 
-              ? 'Sign in to sync your data across all devices' 
+              ? 'Access your personalized dashboard and tools' 
               : 'Create an account to backup and sync your companion data'
             }
           </p>
@@ -122,7 +125,6 @@ function AuthModal({ onClose, showCloseButton = true }) {
 
             {error && (
               <div className="auth-error">
-                <span className="error-icon">⚠️</span>
                 {error}
               </div>
             )}
@@ -160,7 +162,6 @@ function AuthModal({ onClose, showCloseButton = true }) {
 
           <div className="auth-note">
             <p>
-              <span className="note-icon">💡</span>
               Your data is stored locally and optionally synced to the cloud for access across devices.
             </p>
           </div>

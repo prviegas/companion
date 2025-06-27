@@ -207,9 +207,6 @@ function AppContent() {
       <div className="app">
         <div className="auth-required">
           <div className="auth-required-content">
-            <span className="auth-icon">🔐</span>
-            <h2>Welcome to Companion</h2>
-            <p>Please sign in to access your personalized dashboard and tools.</p>
             <AuthModal onClose={() => {}} showCloseButton={false} />
           </div>
         </div>
