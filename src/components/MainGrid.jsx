@@ -139,17 +139,15 @@ function DraggableTool({ tool, index, onMove, onResize, onRemove }) {
   return (
     <>
       <div
-        ref={drag}
         className={`tool-tile ${isDragging ? 'dragging' : ''}`}
         style={{
           gridRow: `${row + 1} / span ${tool.height || 3}`,
           gridColumn: `${col + 1} / span ${tool.width || 2}`,
           opacity: isDragging ? 0.5 : 1,
-          cursor: 'move',
         }}
       >
         <div className="tool-header">
-          <div className="tool-drag-handle">
+          <div ref={drag} className="tool-drag-handle">
             <FontAwesomeIcon icon={faGripVertical} />
             <span className="tool-title">{tool.name}</span>
           </div>
