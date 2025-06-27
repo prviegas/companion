@@ -67,6 +67,7 @@ function MarketListMaker({ isReadOnly = false, sharedToolData = null }) {
   }, [items, sharedToolData])
 
   const addItem = () => {
+    if (isReadOnly) return // Don't allow adding in read-only mode
     if (newItem.trim()) {
       const item = {
         id: Date.now(),
@@ -80,21 +81,25 @@ function MarketListMaker({ isReadOnly = false, sharedToolData = null }) {
   }
 
   const toggleItem = (id) => {
+    if (isReadOnly) return // Don't allow toggling in read-only mode
     setItems(items.map(item =>
       item.id === id ? { ...item, completed: !item.completed } : item
     ))
   }
 
   const deleteItem = (id) => {
+    if (isReadOnly) return // Don't allow deleting in read-only mode
     setItems(items.filter(item => item.id !== id))
   }
 
   const startEditing = (id, text) => {
+    if (isReadOnly) return // Don't allow editing in read-only mode
     setEditingId(id)
     setEditingText(text)
   }
 
   const saveEdit = () => {
+    if (isReadOnly) return // Don't allow saving edits in read-only mode
     if (editingText.trim()) {
       setItems(items.map(item =>
         item.id === editingId ? { ...item, text: editingText.trim() } : item
@@ -110,6 +115,7 @@ function MarketListMaker({ isReadOnly = false, sharedToolData = null }) {
   }
 
   const clearCompleted = () => {
+    if (isReadOnly) return // Don't allow clearing in read-only mode
     setItems(items.filter(item => !item.completed))
   }
 
@@ -152,7 +158,7 @@ function MarketListMaker({ isReadOnly = false, sharedToolData = null }) {
           <span className="stats-text">
             {completedCount} of {totalCount} items completed
           </span>
-          {completedCount > 0 && (
+          {completedCount > 0 && !isReadOnly && (
             <button
               onClick={clearCompleted}
               className="btn btn-secondary btn-sm"

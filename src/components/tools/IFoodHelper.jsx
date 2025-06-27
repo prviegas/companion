@@ -260,6 +260,8 @@ function IFoodHelper({ isReadOnly = false, sharedToolData = null }) {
   }
 
   const addFavorite = async () => {
+    if (isReadOnly) return // Don't allow adding in read-only mode
+    
     if (newFavorite.name.trim() && newFavorite.url.trim()) {
       const newFavoriteItem = {
         id: Date.now(),
@@ -282,6 +284,8 @@ function IFoodHelper({ isReadOnly = false, sharedToolData = null }) {
   }
 
   const removeFavorite = async (id) => {
+    if (isReadOnly) return // Don't allow removing in read-only mode
+    
     // Update local state
     const updatedFavorites = favorites.filter(fav => fav.id !== id)
     setFavorites(updatedFavorites)
@@ -358,6 +362,8 @@ function IFoodHelper({ isReadOnly = false, sharedToolData = null }) {
 
   // Add new favorite dish
   const addFavoriteDish = async () => {
+    if (isReadOnly) return // Don't allow adding in read-only mode
+    
     if (newDish.name.trim()) {
       // Extract restaurant info from URL if available
       let restaurantName = ''
@@ -402,6 +408,8 @@ function IFoodHelper({ isReadOnly = false, sharedToolData = null }) {
 
   // Remove favorite dish
   const removeFavoriteDish = async (id) => {
+    if (isReadOnly) return // Don't allow removing in read-only mode
+    
     // Update local state
     const updatedDishes = favoriteDishes.filter(dish => dish.id !== id)
     setFavoriteDishes(updatedDishes)
@@ -489,24 +497,26 @@ function IFoodHelper({ isReadOnly = false, sharedToolData = null }) {
         <div className="favorites-section">
           <div className="favorites-header">
             <h4>Restaurantes e Pratos Favoritos</h4>
-            <div className="action-buttons">
-              <button
-                className="add-favorite-btn restaurant"
-                onClick={() => setShowAddFavorite(!showAddFavorite)}
-                title="Adicionar restaurante favorito"
-              >
-                <FontAwesomeIcon icon={faPlus} />
-                <span>Restaurante</span>
-              </button>
-              <button
-                className="add-dish-btn"
-                onClick={() => setShowAddDish(!showAddDish)}
-                title="Adicionar prato favorito"
-              >
-                <FontAwesomeIcon icon={faPlus} />
-                <span>Prato</span>
-              </button>
-            </div>
+            {!isReadOnly && (
+              <div className="action-buttons">
+                <button
+                  className="add-favorite-btn restaurant"
+                  onClick={() => setShowAddFavorite(!showAddFavorite)}
+                  title="Adicionar restaurante favorito"
+                >
+                  <FontAwesomeIcon icon={faPlus} />
+                  <span>Restaurante</span>
+                </button>
+                <button
+                  className="add-dish-btn"
+                  onClick={() => setShowAddDish(!showAddDish)}
+                  title="Adicionar prato favorito"
+                >
+                  <FontAwesomeIcon icon={faPlus} />
+                  <span>Prato</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {showAddFavorite && (
@@ -594,13 +604,15 @@ function IFoodHelper({ isReadOnly = false, sharedToolData = null }) {
                           <FontAwesomeIcon icon={faHeart} />
                           <span>{favorite.name}</span>
                         </button>
-                        <button
-                          className="remove-favorite-btn"
-                          onClick={() => removeFavorite(favorite.id)}
-                          title={`Remover ${favorite.name}`}
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                        </button>
+                        {!isReadOnly && (
+                          <button
+                            className="remove-favorite-btn"
+                            onClick={() => removeFavorite(favorite.id)}
+                            title={`Remover ${favorite.name}`}
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                          </button>
+                        )}
                       </div>
                       
                       {/* Render dishes for this restaurant */}
@@ -612,13 +624,15 @@ function IFoodHelper({ isReadOnly = false, sharedToolData = null }) {
                                 <h5 className="dish-name">{dish.name}</h5>
                                 {dish.description && <p className="dish-description">{dish.description}</p>}
                               </div>
-                              <button
-                                className="remove-dish-btn"
-                                onClick={() => removeFavoriteDish(dish.id)}
-                                title={`Remover ${dish.name}`}
-                              >
-                                <FontAwesomeIcon icon={faTrash} />
-                              </button>
+                              {!isReadOnly && (
+                                <button
+                                  className="remove-dish-btn"
+                                  onClick={() => removeFavoriteDish(dish.id)}
+                                  title={`Remover ${dish.name}`}
+                                >
+                                  <FontAwesomeIcon icon={faTrash} />
+                                </button>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -661,13 +675,15 @@ function IFoodHelper({ isReadOnly = false, sharedToolData = null }) {
                                 {dish.restaurant && <p className="dish-restaurant">{dish.restaurant}</p>}
                                 {dish.description && <p className="dish-description">{dish.description}</p>}
                               </div>
-                              <button
-                                className="remove-dish-btn"
-                                onClick={() => removeFavoriteDish(dish.id)}
-                                title={`Remover ${dish.name}`}
-                              >
-                                <FontAwesomeIcon icon={faTrash} />
-                              </button>
+                              {!isReadOnly && (
+                                <button
+                                  className="remove-dish-btn"
+                                  onClick={() => removeFavoriteDish(dish.id)}
+                                  title={`Remover ${dish.name}`}
+                                >
+                                  <FontAwesomeIcon icon={faTrash} />
+                                </button>
+                              )}
                             </div>
                           ))}
                         </div>
