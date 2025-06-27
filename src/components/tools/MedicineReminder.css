@@ -1,0 +1,206 @@
+.medicine-reminder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  height: 100%;
+}
+
+/* Header */
+.medicine-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Add Medicine Form */
+.add-medicine-form {
+  background-color: var(--background-color);
+  padding: var(--spacing-lg);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  margin-bottom: var(--spacing-md);
+}
+
+.add-medicine-form h4 {
+  margin: 0 0 var(--spacing-md) 0;
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.form-group-full {
+  grid-column: 1 / -1;
+}
+
+.form-group label {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-input {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-base);
+  background-color: var(--surface-color);
+  min-height: 40px;
+}
+
+.form-input:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: -2px;
+  border-color: var(--primary-color);
+}
+
+.form-input:required:invalid {
+  border-color: var(--danger-color);
+}
+
+textarea.form-input {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+}
+
+/* Medicines List */
+.medicines-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.empty-list {
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+  color: var(--text-muted);
+}
+
+.empty-icon {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: var(--spacing-md);
+}
+
+/* Medicine Cards */
+.medicine-card {
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.medicine-card:hover {
+  box-shadow: var(--shadow);
+}
+
+.medicine-info {
+  flex: 1;
+}
+
+.medicine-name {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.medicine-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.dosage {
+  background-color: var(--primary-color);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.frequency {
+  background-color: var(--background-color);
+  color: var(--text-secondary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  border: 1px solid var(--border-color);
+}
+
+.time {
+  background-color: var(--warning-color);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.medicine-notes {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin: var(--spacing-sm) 0 0 0;
+  line-height: 1.4;
+}
+
+.last-taken {
+  font-size: var(--font-size-sm);
+  color: var(--success-color);
+  margin: var(--spacing-sm) 0 0 0;
+  font-weight: 600;
+}
+
+.medicine-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .medicine-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .medicine-actions {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  
+  .form-actions {
+    justify-content: stretch;
+  }
+  
+  .form-actions .btn {
+    flex: 1;
+  }
+}

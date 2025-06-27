@@ -1,0 +1,118 @@
+.main-grid {
+  flex: 1;
+  padding: var(--spacing-xl);
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.main-grid-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: var(--spacing-xl);
+  width: 100%;
+}
+
+.tool-card {
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: all 0.2s ease;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tool-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.tool-card.error-card {
+  border-color: var(--danger-color);
+  background-color: #fef2f2;
+  padding: var(--spacing-lg);
+  text-align: center;
+}
+
+.tool-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  background-color: #f8fafc;
+}
+
+.tool-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.tool-content {
+  flex: 1;
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 500px;
+  gap: var(--spacing-lg);
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  opacity: 0.5;
+}
+
+.empty-state-title {
+  font-size: var(--font-size-xl);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.empty-state-message {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .main-grid {
+    padding: var(--spacing-lg);
+  }
+  
+  .tools-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+  
+  .tool-card {
+    min-height: 250px;
+  }
+  
+  .tool-header {
+    padding: var(--spacing-md);
+  }
+  
+  .tool-content {
+    padding: var(--spacing-md);
+  }
+}
