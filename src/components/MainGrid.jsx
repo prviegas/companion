@@ -5,6 +5,7 @@ import './MainGrid.css'
 import MarketListMaker from './tools/MarketListMaker'
 import MedicineReminder from './tools/MedicineReminder'
 import NotesSection from './tools/NotesSection'
+import GoogleCalendar from './tools/GoogleCalendar'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes, faGripVertical, faExpandArrowsAlt, faTrash } from '@fortawesome/free-solid-svg-icons'
 
@@ -12,6 +13,7 @@ const toolComponents = {
   'market-list': MarketListMaker,
   'medicine-reminder': MedicineReminder,
   'notes-section': NotesSection,
+  'google-calendar': GoogleCalendar,
 }
 
 // Define grid dimensions

@@ -21,6 +21,13 @@ const availableTools = [
     description: 'Quick notes and reminders for daily tasks',
     icon: '📝',
     category: 'Organization'
+  },
+  {
+    id: 'google-calendar',
+    name: 'Google Calendar',
+    description: 'View and manage your Google Calendar events',
+    icon: '📅',
+    category: 'Organization'
   }
 ]
 
