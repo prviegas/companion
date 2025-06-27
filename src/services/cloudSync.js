@@ -109,6 +109,10 @@ class CloudSyncService {
       merged.ifoodFavorites = cloudData.ifoodFavorites
     }
 
+    if (cloudData.ifoodFavoriteDishes && Array.isArray(cloudData.ifoodFavoriteDishes)) {
+      merged.ifoodFavoriteDishes = cloudData.ifoodFavoriteDishes
+    }
+
     // For medicine taken data, merge objects
     if (cloudData.medicineTaken) {
       merged.medicineTaken = { ...localData.medicineTaken, ...cloudData.medicineTaken }

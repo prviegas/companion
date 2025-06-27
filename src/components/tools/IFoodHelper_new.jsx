@@ -262,94 +262,13 @@ function IFoodHelper() {
     openIFoodPopup(url)
   }
 
-  // Extract restaurant identifier from iFood URL
-  const extractRestaurantId = (url) => {
-    if (!url) return null
-    
-    try {
-      // Match iFood restaurant URL pattern
-      // Example: https://www.ifood.com.br/delivery/cidade/restaurante-slug/restaurant-id
-      const match = url.match(/\/delivery\/[^\/]+\/([^\/]+)\/([a-f0-9-]{36})/i)
-      if (match) {
-        const [, restaurantSlug, restaurantId] = match
-        return { slug: restaurantSlug, id: restaurantId, fullId: `${restaurantSlug}/${restaurantId}` }
-      }
-      
-      // Fallback: try to extract just the restaurant ID if present
-      const idMatch = url.match(/\/([a-f0-9-]{36})/i)
-      if (idMatch) {
-        return { id: idMatch[1], fullId: idMatch[1] }
-      }
-      
-      return null
-    } catch (error) {
-      console.warn('🍔 Error parsing restaurant URL:', url, error)
-      return null
-    }
-  }
-
-  // Group dishes by restaurant using URL matching
-  const getDishesByRestaurant = () => {
-    const restaurantDishes = {}
-    
-    // Group dishes by restaurant URL identifier
-    favoriteDishes.forEach(dish => {
-      const dishRestaurantId = extractRestaurantId(dish.url)
-      let groupKey = 'Outros' // Default group for dishes without URL or unmatched
-      
-      if (dishRestaurantId) {
-        // Try to find matching restaurant by URL
-        const matchingRestaurant = favorites.find(fav => {
-          const favRestaurantId = extractRestaurantId(fav.url)
-          return favRestaurantId && favRestaurantId.fullId === dishRestaurantId.fullId
-        })
-        
-        if (matchingRestaurant) {
-          groupKey = matchingRestaurant.name
-        } else {
-          // Use restaurant name from dish if no URL match found
-          groupKey = dish.restaurant || 'Outros'
-        }
-      } else {
-        // Fallback to restaurant name matching for dishes without valid URLs
-        groupKey = dish.restaurant || 'Outros'
-      }
-      
-      if (!restaurantDishes[groupKey]) {
-        restaurantDishes[groupKey] = []
-      }
-      restaurantDishes[groupKey].push(dish)
-    })
-    
-    return restaurantDishes
-  }
-
   // Add new favorite dish
   const addFavoriteDish = async () => {
     if (newDish.name.trim()) {
-      // Extract restaurant info from URL if available
-      let restaurantName = ''
-      const dishRestaurantId = extractRestaurantId(newDish.url.trim())
-      
-      if (dishRestaurantId) {
-        // Try to find matching restaurant by URL
-        const matchingRestaurant = favorites.find(fav => {
-          const favRestaurantId = extractRestaurantId(fav.url)
-          return favRestaurantId && favRestaurantId.fullId === dishRestaurantId.fullId
-        })
-        
-        if (matchingRestaurant) {
-          restaurantName = matchingRestaurant.name
-        } else {
-          // Use the restaurant slug from URL as fallback
-          restaurantName = dishRestaurantId.slug ? dishRestaurantId.slug.replace(/-+/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : ''
-        }
-      }
-      
       const newDishItem = {
         id: Date.now(),
         name: newDish.name.trim(),
-        restaurant: restaurantName,
+        restaurant: newDish.restaurant.trim(),
         description: newDish.description.trim(),
         url: newDish.url.trim(),
         createdAt: new Date().toISOString()
@@ -456,25 +375,14 @@ function IFoodHelper() {
 
         <div className="favorites-section">
           <div className="favorites-header">
-            <h4>Restaurantes e Pratos Favoritos</h4>
-            <div className="action-buttons">
-              <button
-                className="add-favorite-btn restaurant"
-                onClick={() => setShowAddFavorite(!showAddFavorite)}
-                title="Adicionar restaurante favorito"
-              >
-                <FontAwesomeIcon icon={faPlus} />
-                <span>Restaurante</span>
-              </button>
-              <button
-                className="add-dish-btn"
-                onClick={() => setShowAddDish(!showAddDish)}
-                title="Adicionar prato favorito"
-              >
-                <FontAwesomeIcon icon={faPlus} />
-                <span>Prato</span>
-              </button>
-            </div>
+            <h4>Restaurantes Favoritos</h4>
+            <button
+              className="add-favorite-btn"
+              onClick={() => setShowAddFavorite(!showAddFavorite)}
+              title="Adicionar restaurante favorito"
+            >
+              <FontAwesomeIcon icon={faPlus} />
+            </button>
           </div>
 
           {showAddFavorite && (
@@ -500,6 +408,47 @@ function IFoodHelper() {
             </div>
           )}
 
+          <div className="favorites-list">
+            {isLoading ? (
+              <p className="no-favorites">Carregando restaurantes favoritos...</p>
+            ) : favorites.length === 0 ? (
+              <p className="no-favorites">Nenhum restaurante favorito adicionado ainda.</p>
+            ) : (
+              favorites.map(favorite => (
+                <div key={favorite.id} className="favorite-item">
+                  <button
+                    className="favorite-btn"
+                    onClick={() => openFavorite(favorite.url)}
+                    title={`Abrir ${favorite.name}`}
+                  >
+                    <FontAwesomeIcon icon={faHeart} />
+                    <span>{favorite.name}</span>
+                  </button>
+                  <button
+                    className="remove-favorite-btn"
+                    onClick={() => removeFavorite(favorite.id)}
+                    title={`Remover ${favorite.name}`}
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="dishes-section">
+          <div className="dishes-header">
+            <h4>Pratos Favoritos</h4>
+            <button
+              className="add-dish-btn"
+              onClick={() => setShowAddDish(!showAddDish)}
+              title="Adicionar prato favorito"
+            >
+              <FontAwesomeIcon icon={faPlus} />
+            </button>
+          </div>
+
           {showAddDish && (
             <div className="add-dish-form">
               <input
@@ -507,6 +456,13 @@ function IFoodHelper() {
                 placeholder="Nome do prato"
                 value={newDish.name}
                 onChange={(e) => setNewDish({ ...newDish, name: e.target.value })}
+                className="dish-input"
+              />
+              <input
+                type="text"
+                placeholder="Restaurante"
+                value={newDish.restaurant}
+                onChange={(e) => setNewDish({ ...newDish, restaurant: e.target.value })}
                 className="dish-input"
               />
               <textarea
@@ -517,7 +473,7 @@ function IFoodHelper() {
               />
               <input
                 type="url"
-                placeholder="URL do prato (o restaurante será detectado automaticamente)"
+                placeholder="URL do prato (opcional)"
                 value={newDish.url}
                 onChange={(e) => setNewDish({ ...newDish, url: e.target.value })}
                 className="dish-input"
@@ -529,122 +485,28 @@ function IFoodHelper() {
             </div>
           )}
 
-          <div className="favorites-list">
+          <div className="dishes-list">
             {isLoading ? (
-              <p className="no-favorites">Carregando favoritos...</p>
-            ) : favorites.length === 0 && favoriteDishes.length === 0 ? (
-              <p className="no-favorites">Nenhum favorito adicionado ainda.</p>
+              <p className="no-dishes">Carregando pratos favoritos...</p>
+            ) : favoriteDishes.length === 0 ? (
+              <p className="no-dishes">Nenhum prato favorito adicionado ainda.</p>
             ) : (
-              <>
-                {/* Render favorite restaurants */}
-                {favorites.map(favorite => {
-                  const favoriteRestaurantId = extractRestaurantId(favorite.url)
-                  const restaurantDishes = favoriteDishes.filter(dish => {
-                    const dishRestaurantId = extractRestaurantId(dish.url)
-                    
-                    // First try URL matching (most reliable)
-                    if (favoriteRestaurantId && dishRestaurantId) {
-                      return favoriteRestaurantId.fullId === dishRestaurantId.fullId
-                    }
-                    
-                    // Fallback to name matching for dishes without URLs
-                    return dish.restaurant && dish.restaurant.toLowerCase() === favorite.name.toLowerCase()
-                  })
-                  
-                  return (
-                    <div key={favorite.id} className="restaurant-group">
-                      <div className="favorite-item restaurant">
-                        <button
-                          className="favorite-btn"
-                          onClick={() => openFavorite(favorite.url)}
-                          title={`Abrir ${favorite.name}`}
-                        >
-                          <FontAwesomeIcon icon={faHeart} />
-                          <span>{favorite.name}</span>
-                        </button>
-                        <button
-                          className="remove-favorite-btn"
-                          onClick={() => removeFavorite(favorite.id)}
-                          title={`Remover ${favorite.name}`}
-                        >
-                          <FontAwesomeIcon icon={faTrash} />
-                        </button>
-                      </div>
-                      
-                      {/* Render dishes for this restaurant */}
-                      {restaurantDishes.length > 0 && (
-                        <div className="restaurant-dishes">
-                          {restaurantDishes.map(dish => (
-                            <div key={dish.id} className="dish-item">
-                              <div className="dish-info" onClick={() => openFavoriteDish(dish)}>
-                                <h5 className="dish-name">{dish.name}</h5>
-                                {dish.description && <p className="dish-description">{dish.description}</p>}
-                              </div>
-                              <button
-                                className="remove-dish-btn"
-                                onClick={() => removeFavoriteDish(dish.id)}
-                                title={`Remover ${dish.name}`}
-                              >
-                                <FontAwesomeIcon icon={faTrash} />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-                
-                {/* Render dishes without a matching restaurant */}
-                {(() => {
-                  const orphanedDishes = favoriteDishes.filter(dish => {
-                    const dishRestaurantId = extractRestaurantId(dish.url)
-                    
-                    const hasMatchingRestaurant = favorites.some(fav => {
-                      const favRestaurantId = extractRestaurantId(fav.url)
-                      
-                      // First try URL matching
-                      if (favRestaurantId && dishRestaurantId) {
-                        return favRestaurantId.fullId === dishRestaurantId.fullId
-                      }
-                      
-                      // Fallback to name matching
-                      return dish.restaurant && fav.name.toLowerCase() === dish.restaurant.toLowerCase()
-                    })
-                    
-                    return !hasMatchingRestaurant
-                  })
-                  
-                  if (orphanedDishes.length > 0) {
-                    return (
-                      <div className="restaurant-group orphaned">
-                        <div className="orphaned-header">
-                          <h5>Outros Pratos</h5>
-                        </div>
-                        <div className="restaurant-dishes">
-                          {orphanedDishes.map(dish => (
-                            <div key={dish.id} className="dish-item">
-                              <div className="dish-info" onClick={() => openFavoriteDish(dish)}>
-                                <h5 className="dish-name">{dish.name}</h5>
-                                {dish.restaurant && <p className="dish-restaurant">{dish.restaurant}</p>}
-                                {dish.description && <p className="dish-description">{dish.description}</p>}
-                              </div>
-                              <button
-                                className="remove-dish-btn"
-                                onClick={() => removeFavoriteDish(dish.id)}
-                                title={`Remover ${dish.name}`}
-                              >
-                                <FontAwesomeIcon icon={faTrash} />
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )
-                  }
-                  return null
-                })()}
-              </>
+              favoriteDishes.map(dish => (
+                <div key={dish.id} className="dish-item">
+                  <div className="dish-info" onClick={() => openFavoriteDish(dish)}>
+                    <h5 className="dish-name">{dish.name}</h5>
+                    {dish.restaurant && <p className="dish-restaurant">{dish.restaurant}</p>}
+                    {dish.description && <p className="dish-description">{dish.description}</p>}
+                  </div>
+                  <button
+                    className="remove-dish-btn"
+                    onClick={() => removeFavoriteDish(dish.id)}
+                    title={`Remover ${dish.name}`}
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                </div>
+              ))
             )}
           </div>
         </div>
