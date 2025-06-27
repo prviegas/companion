@@ -28,6 +28,13 @@ const availableTools = [
     description: 'View and manage your Google Calendar events',
     icon: '📅',
     category: 'Organization'
+  },
+  {
+    id: 'ifood-helper',
+    name: 'iFood Helper',
+    description: 'Manage favorite restaurants, order history, and quick reorders',
+    icon: '🍔',
+    category: 'Lifestyle'
   }
 ]
 

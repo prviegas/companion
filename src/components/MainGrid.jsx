@@ -6,6 +6,7 @@ import MarketListMaker from './tools/MarketListMaker'
 import MedicineReminder from './tools/MedicineReminder'
 import NotesSection from './tools/NotesSection'
 import GoogleCalendar from './tools/GoogleCalendar'
+import IFoodHelper from './tools/IFoodHelper'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTimes, faGripVertical, faExpandArrowsAlt, faTrash } from '@fortawesome/free-solid-svg-icons'
 
@@ -14,6 +15,7 @@ const toolComponents = {
   'medicine-reminder': MedicineReminder,
   'notes-section': NotesSection,
   'google-calendar': GoogleCalendar,
+  'ifood-helper': IFoodHelper,
 }
 
 // Define grid dimensions
