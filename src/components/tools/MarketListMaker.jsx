@@ -34,7 +34,7 @@ const loadItemsFromStorage = () => {
   }
 }
 
-function MarketListMaker() {
+function MarketListMaker({ isReadOnly = false }) {
   const [items, setItems] = useState(() => loadItemsFromStorage())
   const [newItem, setNewItem] = useState('')
   const [editingId, setEditingId] = useState(null)
@@ -100,26 +100,34 @@ function MarketListMaker() {
 
   return (
     <div className="market-list">
-      <div className="add-item-form">
-        <div className="input-group">
-          <input
-            type="text"
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && addItem()}
-            placeholder="Add item to shopping list..."
-            className="item-input"
-            aria-label="New shopping list item"
-          />
-          <button
-            onClick={addItem}
-            className="btn btn-primary btn-sm"
-            disabled={!newItem.trim()}
-          >
-            Add
-          </button>
+      {!isReadOnly && (
+        <div className="add-item-form">
+          <div className="input-group">
+            <input
+              type="text"
+              value={newItem}
+              onChange={(e) => setNewItem(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && addItem()}
+              placeholder="Add item to shopping list..."
+              className="item-input"
+              aria-label="New shopping list item"
+            />
+            <button
+              onClick={addItem}
+              className="btn btn-primary btn-sm"
+              disabled={!newItem.trim()}
+            >
+              Add
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {isReadOnly && items.length === 0 && (
+        <div className="empty-state">
+          <p>No shopping list items to display</p>
+        </div>
+      )}
 
       {totalCount > 0 && (
         <div className="list-stats">
@@ -152,13 +160,14 @@ function MarketListMaker() {
               <div className="item-content">
                 <button
                   className={`checkbox ${item.completed ? 'checked' : ''}`}
-                  onClick={() => toggleItem(item.id)}
+                  onClick={() => !isReadOnly && toggleItem(item.id)}
                   aria-label={`Mark ${item.text} as ${item.completed ? 'incomplete' : 'complete'}`}
+                  disabled={isReadOnly}
                 >
                   {item.completed && '✓'}
                 </button>
 
-                {editingId === item.id ? (
+                {editingId === item.id && !isReadOnly ? (
                   <div className="edit-form">
                     <input
                       type="text"
@@ -189,22 +198,24 @@ function MarketListMaker() {
                 ) : (
                   <div className="item-details">
                     <span className="item-text">{item.text}</span>
-                    <div className="item-actions">
-                      <button
-                        onClick={() => startEditing(item.id, item.text)}
-                        className="btn btn-secondary btn-sm"
-                        aria-label={`Edit ${item.text}`}
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={() => deleteItem(item.id)}
-                        className="btn btn-danger btn-sm"
-                        aria-label={`Delete ${item.text}`}
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </button>
-                    </div>
+                    {!isReadOnly && (
+                      <div className="item-actions">
+                        <button
+                          onClick={() => startEditing(item.id, item.text)}
+                          className="btn btn-secondary btn-sm"
+                          aria-label={`Edit ${item.text}`}
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => deleteItem(item.id)}
+                          className="btn btn-danger btn-sm"
+                          aria-label={`Delete ${item.text}`}
+                        >
+                          <FontAwesomeIcon icon={faTrash} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

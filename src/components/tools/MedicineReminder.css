@@ -627,3 +627,35 @@ textarea.form-input {
     text-align: center;
   }
 }
+
+/* Read-only mode styles */
+.read-only-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.medicine-title,
+.notes-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.read-only-badge {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  background: var(--background-color);
+  padding: 2px 6px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.pill.read-only {
+  cursor: default !important;
+}
+
+.pill.read-only:hover {
+  transform: none !important;
+}

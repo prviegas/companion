@@ -10,7 +10,12 @@ function Header({
   onCloseToolSelector,
   user,
   isAuthenticated,
-  syncStatus
+  syncStatus,
+  // Sharing props
+  isViewingSharedBoard,
+  sharedBoardOwner,
+  onShowShareModal,
+  onExitSharedBoard
 }) {
   const { logout } = useAuth()
 
@@ -54,16 +59,45 @@ function Header({
         </div>
         
         <div className="header-controls">
-          <div className="header-actions">
-            <button
-              className={`btn ${isSelectingTools ? 'btn-secondary' : 'btn-primary'}`}
-              onClick={onToggleToolSelector}
-              aria-expanded={isSelectingTools}
-              aria-controls="tool-selector"
-            >
-              {isSelectingTools ? 'Close Tools' : 'Add Tools'}
-            </button>
-          </div>
+          {isViewingSharedBoard ? (
+            <div className="shared-board-banner">
+              <div className="shared-info">
+                <span className="shared-icon">👁️</span>
+                <div className="shared-text">
+                  <span className="shared-label">Viewing shared board from:</span>
+                  <span className="shared-owner">{sharedBoardOwner}</span>
+                </div>
+              </div>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={onExitSharedBoard}
+              >
+                Exit Shared View
+              </button>
+            </div>
+          ) : (
+            <div className="header-actions">
+              <button
+                className={`btn ${isSelectingTools ? 'btn-secondary' : 'btn-primary'}`}
+                onClick={onToggleToolSelector}
+                aria-expanded={isSelectingTools}
+                aria-controls="tool-selector"
+              >
+                {isSelectingTools ? 'Close Tools' : 'Add Tools'}
+              </button>
+              
+              {isAuthenticated && selectedTools.length > 0 && (
+                <button
+                  className="btn btn-outline share-btn"
+                  onClick={onShowShareModal}
+                  title="Share your board"
+                >
+                  <span className="share-icon">🔗</span>
+                  Share Board
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="header-auth">
             {isAuthenticated && user && (

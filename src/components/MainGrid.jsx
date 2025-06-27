@@ -105,7 +105,7 @@ function ResizeSelector({ isOpen, onClose, onResize, currentWidth = 2, currentHe
 }
 
 // Draggable Tool Component
-function DraggableTool({ tool, index, onMove, onResize, onRemove }) {
+function DraggableTool({ tool, index, onMove, onResize, onRemove, isReadOnly = false }) {
   const [showResizeSelector, setShowResizeSelector] = useState(false)
   
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -151,39 +151,44 @@ function DraggableTool({ tool, index, onMove, onResize, onRemove }) {
         }}
       >
         <div className="tool-header">
-          <div ref={drag} className="tool-drag-handle">
-            <FontAwesomeIcon icon={faGripVertical} />
+          <div className={`tool-drag-handle ${isReadOnly ? 'read-only' : ''}`} ref={isReadOnly ? null : drag}>
+            {!isReadOnly && <FontAwesomeIcon icon={faGripVertical} />}
             <span className="tool-title">{tool.name}</span>
+            {isReadOnly && <span className="read-only-indicator">👁️ Read-only</span>}
           </div>
-          <div className="tool-controls">
-            <button
-              className="tool-control-btn"
-              onClick={() => setShowResizeSelector(true)}
-              title="Resize tool"
-            >
-              <FontAwesomeIcon icon={faExpandArrowsAlt} />
-            </button>
-            <button
-              className="tool-control-btn tool-remove-btn"
-              onClick={() => onRemove(tool.id)}
-              title="Remove tool"
-            >
-              <FontAwesomeIcon icon={faTrash} />
-            </button>
-          </div>
+          {!isReadOnly && (
+            <div className="tool-controls">
+              <button
+                className="tool-control-btn"
+                onClick={() => setShowResizeSelector(true)}
+                title="Resize tool"
+              >
+                <FontAwesomeIcon icon={faExpandArrowsAlt} />
+              </button>
+              <button
+                className="tool-control-btn tool-remove-btn"
+                onClick={() => onRemove(tool.id)}
+                title="Remove tool"
+              >
+                <FontAwesomeIcon icon={faTrash} />
+              </button>
+            </div>
+          )}
         </div>
         <div className="tool-content">
-          <ToolComponent />
+          <ToolComponent isReadOnly={isReadOnly} />
         </div>
       </div>
       
-      <ResizeSelector
-        isOpen={showResizeSelector}
-        onClose={() => setShowResizeSelector(false)}
-        onResize={handleResize}
-        currentWidth={tool.width || 2}
-        currentHeight={tool.height || 3}
-      />
+      {!isReadOnly && (
+        <ResizeSelector
+          isOpen={showResizeSelector}
+          onClose={() => setShowResizeSelector(false)}
+          onResize={handleResize}
+          currentWidth={tool.width || 2}
+          currentHeight={tool.height || 3}
+        />
+      )}
     </>
   )
 }
@@ -227,7 +232,7 @@ function DropTile({ index, isOccupied, onDrop }) {
 }
 
 // Main Grid Component
-function MainGrid({ tools, onRemoveTool, onUpdateTool }) {
+function MainGrid({ tools, onRemoveTool, onUpdateTool, isReadOnly = false }) {
   // Create a simple array mapping tools to grid positions
   const [toolPositions, setToolPositions] = useState(() => {
     const positions = new Array(TOTAL_TILES).fill(null)
@@ -357,7 +362,8 @@ function MainGrid({ tools, onRemoveTool, onUpdateTool }) {
       <main className="main-grid">
         <div className="tile-grid">
           {/* Render drop zones for all tiles */}
-          {Array.from({ length: TOTAL_TILES }, (_, index) => {
+          {/* Render drop tiles only in edit mode */}
+          {!isReadOnly && Array.from({ length: TOTAL_TILES }, (_, index) => {
             const occupiedTiles = getOccupiedTiles()
             return (
               <DropTile
@@ -379,6 +385,7 @@ function MainGrid({ tools, onRemoveTool, onUpdateTool }) {
                 onMove={handleDrop}
                 onResize={handleResize}
                 onRemove={onRemoveTool}
+                isReadOnly={isReadOnly}
               />
             ) : null
           )}

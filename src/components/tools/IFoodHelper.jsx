@@ -42,7 +42,7 @@ const loadWindowSettings = () => {
   }
 }
 
-function IFoodHelper() {
+function IFoodHelper({ isReadOnly = false }) {
   // Window settings (stored in localStorage for immediate access)
   const [windowSettings, setWindowSettings] = useState(() => loadWindowSettings())
   

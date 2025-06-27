@@ -33,7 +33,7 @@ const loadNotesFromStorage = () => {
   }
 }
 
-function NotesSection() {
+function NotesSection({ isReadOnly = false }) {
   const [notes, setNotes] = useState(() => loadNotesFromStorage())
   const [showManageModal, setShowManageModal] = useState(false)
 
@@ -80,23 +80,33 @@ function NotesSection() {
   return (
     <div className="notes-section">
       <div className="notes-header">
-        <button
-          onClick={() => setShowManageModal(true)}
-          className="btn btn-primary btn-sm"
-        >
-          Manage Notes
-        </button>
+        {!isReadOnly && (
+          <button
+            onClick={() => setShowManageModal(true)}
+            className="btn btn-primary btn-sm"
+          >
+            Manage Notes
+          </button>
+        )}
+        {isReadOnly && (
+          <div className="read-only-header">
+            <span className="notes-title">Notes</span>
+            <span className="read-only-badge">👁️ Read-only</span>
+          </div>
+        )}
       </div>
 
-      {/* Notes Modal */}
-      <NotesModal
-        isOpen={showManageModal}
-        onClose={() => setShowManageModal(false)}
-        notes={notes}
-        onAddNote={addNote}
-        onUpdateNote={updateNote}
-        onDeleteNote={deleteNote}
-      />
+      {/* Notes Modal - only show in edit mode */}
+      {!isReadOnly && (
+        <NotesModal
+          isOpen={showManageModal}
+          onClose={() => setShowManageModal(false)}
+          notes={notes}
+          onAddNote={addNote}
+          onUpdateNote={updateNote}
+          onDeleteNote={deleteNote}
+        />
+      )}
 
       <div className="notes-display">
         {notes.length === 0 ? (

@@ -311,3 +311,23 @@
   color: var(--text-muted);
   font-size: var(--font-size-sm);
 }
+
+/* Read-only mode styles */
+.tool-drag-handle.read-only {
+  cursor: default !important;
+}
+
+.tool-drag-handle.read-only:hover {
+  background-color: transparent;
+}
+
+.read-only-indicator {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-left: auto;
+  background: var(--background-color);
+  padding: 2px 6px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}

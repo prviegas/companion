@@ -43,6 +43,14 @@ function AppContent() {
   const [syncStatus, setSyncStatus] = useState('loading') // 'loading', 'syncing', 'synced', 'error'
   const [dataLoaded, setDataLoaded] = useState(false)
   
+  // Sharing state
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [shareLink, setShareLink] = useState('')
+  const [isGeneratingShare, setIsGeneratingShare] = useState(false)
+  const [sharedBoardData, setSharedBoardData] = useState(null)
+  const [sharedBoardOwner, setSharedBoardOwner] = useState('')
+  const [isViewingSharedBoard, setIsViewingSharedBoard] = useState(false)
+  
   const { user, isAuthenticated, loading } = useAuth()
 
   // Load user data when authenticated
@@ -52,12 +60,22 @@ function AppContent() {
     }
   }, [isAuthenticated, user, dataLoaded])
 
-  // Auto-save to cloud whenever data changes
+  // Check for shared board in URL on component mount
   useEffect(() => {
-    if (isAuthenticated && user && dataLoaded) {
+    const urlParams = new URLSearchParams(window.location.search)
+    const shareId = urlParams.get('shared')
+    
+    if (shareId) {
+      loadSharedBoard(shareId)
+    }
+  }, [])
+
+  // Auto-save to cloud whenever data changes (but not for shared boards)
+  useEffect(() => {
+    if (isAuthenticated && user && dataLoaded && !isViewingSharedBoard) {
       saveUserData()
     }
-  }, [selectedTools, isAuthenticated, user, dataLoaded])
+  }, [selectedTools, isAuthenticated, user, dataLoaded, isViewingSharedBoard])
 
   const loadUserData = async () => {
     if (!user) return
@@ -189,6 +207,124 @@ function AppContent() {
     console.log('✅ Tool updated:', updatedTool.name, updatedTool)
   }
 
+  // Sharing functions
+  const generateShareLink = async () => {
+    if (!user || selectedTools.length === 0) return
+
+    setIsGeneratingShare(true)
+    try {
+      const shareId = `share_${user.uid}_${Date.now()}`
+      const shareData = {
+        id: shareId,
+        ownerEmail: user.email,
+        tools: selectedTools,
+        createdAt: new Date().toISOString(),
+        isActive: true
+      }
+
+      await cloudSync.saveShareData(shareId, shareData)
+      const link = `${window.location.origin}${window.location.pathname}?shared=${shareId}`
+      setShareLink(link)
+      
+      // Save share config to user's data
+      const userShares = await cloudSync.getUserShares(user.uid) || []
+      userShares.push({ shareId, createdAt: shareData.createdAt, isActive: true })
+      await cloudSync.saveUserShares(user.uid, userShares)
+
+      console.log('✅ Share link generated:', link)
+    } catch (error) {
+      console.error('❌ Failed to generate share link:', error)
+      alert('Failed to generate share link. Please try again.')
+    } finally {
+      setIsGeneratingShare(false)
+    }
+  }
+
+  const loadSharedBoard = async (shareId) => {
+    try {
+      console.log('🔄 Loading shared board:', shareId)
+      const shareData = await cloudSync.loadShareData(shareId)
+      
+      if (!shareData || !shareData.isActive) {
+        console.warn('⚠️ Share link is invalid or expired')
+        alert('This share link is invalid or has been disabled.')
+        // Remove share parameter from URL
+        const url = new URL(window.location)
+        url.searchParams.delete('shared')
+        window.history.replaceState({}, '', url)
+        return
+      }
+
+      setSharedBoardData(shareData.tools || [])
+      setSharedBoardOwner(shareData.ownerEmail || 'Unknown')
+      setIsViewingSharedBoard(true)
+      setSelectedTools(shareData.tools || [])
+      
+      console.log('✅ Shared board loaded successfully')
+    } catch (error) {
+      console.error('❌ Failed to load shared board:', error)
+      alert('Failed to load shared board. The link may be invalid.')
+    }
+  }
+
+  const copyShareLink = async () => {
+    if (!shareLink) return
+
+    try {
+      await navigator.clipboard.writeText(shareLink)
+      alert('Share link copied to clipboard!')
+    } catch (error) {
+      console.error('❌ Failed to copy to clipboard:', error)
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea')
+      textArea.value = shareLink
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textArea)
+      alert('Share link copied to clipboard!')
+    }
+  }
+
+  const disableSharing = async () => {
+    if (!user || !shareLink) return
+
+    try {
+      const shareId = shareLink.split('shared=')[1]
+      await cloudSync.disableShare(shareId)
+      
+      // Update user's share config
+      const userShares = await cloudSync.getUserShares(user.uid) || []
+      const updatedShares = userShares.map(share => 
+        share.shareId === shareId ? { ...share, isActive: false } : share
+      )
+      await cloudSync.saveUserShares(user.uid, updatedShares)
+
+      setShareLink('')
+      setShowShareModal(false)
+      alert('Sharing has been disabled. The link is no longer accessible.')
+    } catch (error) {
+      console.error('❌ Failed to disable sharing:', error)
+      alert('Failed to disable sharing. Please try again.')
+    }
+  }
+
+  const exitSharedBoard = () => {
+    setIsViewingSharedBoard(false)
+    setSharedBoardData(null)
+    setSharedBoardOwner('')
+    
+    // Remove share parameter from URL
+    const url = new URL(window.location)
+    url.searchParams.delete('shared')
+    window.history.replaceState({}, '', url)
+    
+    // Reload user's own data
+    if (isAuthenticated && user) {
+      loadUserData()
+    }
+  }
+
   // Show loading screen while checking authentication
   if (loading || (isAuthenticated && !dataLoaded)) {
     return (
@@ -225,13 +361,84 @@ function AppContent() {
         user={user}
         isAuthenticated={isAuthenticated}
         syncStatus={syncStatus}
+        // Sharing props
+        isViewingSharedBoard={isViewingSharedBoard}
+        sharedBoardOwner={sharedBoardOwner}
+        onShowShareModal={() => setShowShareModal(true)}
+        onExitSharedBoard={exitSharedBoard}
       />
       
       <MainGrid 
         tools={selectedTools}
         onRemoveTool={removeTool}
         onUpdateTool={updateTool}
+        isReadOnly={isViewingSharedBoard}
       />
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="modal-overlay" onClick={() => setShowShareModal(false)}>
+          <div className="modal-content share-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Share Your Board</h2>
+              <button 
+                className="modal-close"
+                onClick={() => setShowShareModal(false)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              {!shareLink ? (
+                <div className="share-generate">
+                  <p>Share your entire board with others. They'll be able to view all your tools and data, but won't be able to make changes.</p>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={generateShareLink}
+                    disabled={isGeneratingShare || selectedTools.length === 0}
+                  >
+                    {isGeneratingShare ? 'Generating...' : 'Generate Share Link'}
+                  </button>
+                  {selectedTools.length === 0 && (
+                    <p className="share-warning">Add some tools to your board first before sharing.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="share-active">
+                  <p>Your board is now shareable! Anyone with this link can view your board:</p>
+                  <div className="share-link-container">
+                    <input 
+                      type="text" 
+                      value={shareLink} 
+                      readOnly 
+                      className="share-link-input"
+                    />
+                    <button 
+                      className="btn btn-secondary"
+                      onClick={copyShareLink}
+                    >
+                      Copy Link
+                    </button>
+                  </div>
+                  <div className="share-actions">
+                    <button 
+                      className="btn btn-danger"
+                      onClick={disableSharing}
+                    >
+                      Disable Sharing
+                    </button>
+                  </div>
+                  <p className="share-info">
+                    <strong>Note:</strong> The shared board is read-only. Viewers can see your tools and data but cannot make changes.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

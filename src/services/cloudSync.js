@@ -137,6 +137,78 @@ class CloudSyncService {
 
     return Array.from(merged.values())
   }
+
+  // Sharing functions
+  async saveShareData(shareId, shareData) {
+    try {
+      const shareDocRef = doc(db, 'shares', shareId)
+      await setDoc(shareDocRef, shareData, { merge: true })
+      console.log('☁️ Share data saved successfully')
+      return true
+    } catch (error) {
+      console.error('❌ Error saving share data:', error)
+      return false
+    }
+  }
+
+  async loadShareData(shareId) {
+    try {
+      const shareDocRef = doc(db, 'shares', shareId)
+      const docSnap = await getDoc(shareDocRef)
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data()
+        console.log('☁️ Share data loaded successfully')
+        return data
+      } else {
+        console.log('📄 No share data found')
+        return null
+      }
+    } catch (error) {
+      console.error('❌ Error loading share data:', error)
+      return null
+    }
+  }
+
+  async disableShare(shareId) {
+    try {
+      const shareDocRef = doc(db, 'shares', shareId)
+      await setDoc(shareDocRef, { isActive: false }, { merge: true })
+      console.log('☁️ Share disabled successfully')
+      return true
+    } catch (error) {
+      console.error('❌ Error disabling share:', error)
+      return false
+    }
+  }
+
+  async saveUserShares(userId, shares) {
+    try {
+      const userDocRef = doc(db, 'users', userId)
+      await setDoc(userDocRef, { shares }, { merge: true })
+      console.log('☁️ User shares saved successfully')
+      return true
+    } catch (error) {
+      console.error('❌ Error saving user shares:', error)
+      return false
+    }
+  }
+
+  async getUserShares(userId) {
+    try {
+      const userDocRef = doc(db, 'users', userId)
+      const docSnap = await getDoc(userDocRef)
+      
+      if (docSnap.exists()) {
+        const data = docSnap.data()
+        return data.shares || []
+      }
+      return []
+    } catch (error) {
+      console.error('❌ Error loading user shares:', error)
+      return []
+    }
+  }
 }
 
 export const cloudSync = new CloudSyncService()

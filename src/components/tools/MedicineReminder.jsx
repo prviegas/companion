@@ -80,7 +80,7 @@ const getCurrentTimeSlot = () => {
   }
 }
 
-function MedicineReminder() {
+function MedicineReminder({ isReadOnly = false }) {
   const [medicines, setMedicines] = useState(() => loadMedicinesFromStorage())
   const [takenMedicines, setTakenMedicines] = useState(() => loadTakenFromStorage())
   const [showManageModal, setShowManageModal] = useState(false)
@@ -184,23 +184,33 @@ function MedicineReminder() {
   return (
     <div className="medicine-reminder">
       <div className="medicine-header">
-        <button
-          onClick={() => setShowManageModal(true)}
-          className="btn btn-primary btn-sm"
-        >
-          Manage Medicine
-        </button>
+        {!isReadOnly && (
+          <button
+            onClick={() => setShowManageModal(true)}
+            className="btn btn-primary btn-sm"
+          >
+            Manage Medicine
+          </button>
+        )}
+        {isReadOnly && (
+          <div className="read-only-header">
+            <span className="medicine-title">Medicine Reminders</span>
+            <span className="read-only-badge">👁️ Read-only</span>
+          </div>
+        )}
       </div>
 
-      {/* Medicine Modal */}
-      <MedicineModal
-        isOpen={showManageModal}
-        onClose={() => setShowManageModal(false)}
-        medicines={medicines}
-        onAddMedicine={addMedicine}
-        onUpdateMedicine={updateMedicine}
-        onDeleteMedicine={deleteMedicine}
-      />
+      {/* Medicine Modal - only show in edit mode */}
+      {!isReadOnly && (
+        <MedicineModal
+          isOpen={showManageModal}
+          onClose={() => setShowManageModal(false)}
+          medicines={medicines}
+          onAddMedicine={addMedicine}
+          onUpdateMedicine={updateMedicine}
+          onDeleteMedicine={deleteMedicine}
+        />
+      )}
 
       {medicines.length === 0 ? (
         <div className="empty-list">
@@ -245,10 +255,10 @@ function MedicineReminder() {
                       return (
                         <div
                           key={pillKey}
-                          className={`pill ${taken ? 'taken' : ''} ${wasJustUntaken ? 'untaking' : ''}`}
+                          className={`pill ${taken ? 'taken' : ''} ${wasJustUntaken ? 'untaking' : ''} ${isReadOnly ? 'read-only' : ''}`}
                           style={{ backgroundColor: medicine.color }}
-                          onClick={() => toggleTaken(medicine.id, day, timeSlot)}
-                          title={`${medicine.name} - ${medicine.dosage}${medicine.notes ? '\n' + medicine.notes : ''}${taken ? '\nTaken: ' + taken + '\nClick to mark as not taken' : '\nClick to mark as taken'}`}
+                          onClick={() => !isReadOnly && toggleTaken(medicine.id, day, timeSlot)}
+                          title={`${medicine.name} - ${medicine.dosage}${medicine.notes ? '\n' + medicine.notes : ''}${taken ? '\nTaken: ' + taken + (isReadOnly ? '' : '\nClick to mark as not taken') : (isReadOnly ? '' : '\nClick to mark as taken')}`}
                         >
                           <span className="pill-label">{medicine.name.charAt(0).toUpperCase()}</span>
                           <span className="pill-dosage">{medicine.dosage}</span>
