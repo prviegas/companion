@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import './MarketListMaker.css'
 import { useCloudSync } from '../../hooks/useCloudSync'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTrash } from '@fortawesome/free-solid-svg-icons'
 
 // Utility functions for localStorage
 const STORAGE_KEY = 'marketListItems'
@@ -200,7 +202,7 @@ function MarketListMaker() {
                         className="btn btn-danger btn-sm"
                         aria-label={`Delete ${item.text}`}
                       >
-                        🗑️
+                        <FontAwesomeIcon icon={faTrash} />
                       </button>
                     </div>
                   </div>

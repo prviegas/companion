@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import './MedicineReminder.css'
 import { useCloudSync } from '../../hooks/useCloudSync'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faTrash } from '@fortawesome/free-solid-svg-icons'
 
 // Utility functions for localStorage
 const STORAGE_KEY = 'medicineReminders'
@@ -382,7 +384,7 @@ function MedicineReminder() {
                 className="btn btn-danger btn-sm"
                 aria-label={`Delete ${medicine.name}`}
               >
-                🗑️
+                <FontAwesomeIcon icon={faTrash} />
               </button>
             </div>
           ))}
