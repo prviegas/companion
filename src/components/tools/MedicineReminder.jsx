@@ -56,6 +56,27 @@ const loadTakenFromStorage = () => {
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const timeSlots = ['morning', 'afternoon', 'night']
 
+// Helper functions to get current day and time period
+const getCurrentDay = () => {
+  const today = new Date()
+  const dayIndex = today.getDay() // 0 = Sunday, 1 = Monday, etc.
+  const mondayBasedIndex = dayIndex === 0 ? 6 : dayIndex - 1 // Convert to Monday-based index
+  return days[mondayBasedIndex]
+}
+
+const getCurrentTimeSlot = () => {
+  const now = new Date()
+  const hour = now.getHours()
+  
+  if (hour >= 5 && hour < 12) {
+    return 'morning'
+  } else if (hour >= 12 && hour < 18) {
+    return 'afternoon'
+  } else {
+    return 'night'
+  }
+}
+
 function MedicineReminder() {
   const [medicines, setMedicines] = useState(() => loadMedicinesFromStorage())
   const [takenMedicines, setTakenMedicines] = useState(() => loadTakenFromStorage())
@@ -68,6 +89,10 @@ function MedicineReminder() {
     color: '#6366f1',
     notes: ''
   })
+
+  // Get current day and time slot for highlighting
+  const currentDay = getCurrentDay()
+  const currentTimeSlot = getCurrentTimeSlot()
 
   // Cloud sync for medicines and taken medicines
   useCloudSync('medicineReminders', medicines, setMedicines)
@@ -283,39 +308,52 @@ function MedicineReminder() {
           <div className="organizer-header">
             <div className="day-header"></div>
             {timeSlots.map(slot => (
-              <div key={slot} className="time-header">
+              <div 
+                key={slot} 
+                className={`time-header ${slot === currentTimeSlot ? 'current-time' : ''}`}
+              >
                 {slot.charAt(0).toUpperCase() + slot.slice(1)}
+                {slot === currentTimeSlot && <span className="current-indicator"> ●</span>}
               </div>
             ))}
           </div>
           
           {days.map(day => (
             <div key={day} className="day-row">
-              <div className="day-label">{day}</div>
-              {timeSlots.map(timeSlot => (
-                <div key={`${day}-${timeSlot}`} className="pill-slot">
-                  {getMedicinesForSlot(day, timeSlot).map(medicine => {
-                    const taken = isTaken(medicine.id, day, timeSlot)
-                    const pillKey = `${medicine.id}-${day}-${timeSlot}`
-                    const isAnimating = animatingPills.has(pillKey)
-                    const wasJustTaken = taken && isAnimating
-                    const wasJustUntaken = !taken && isAnimating
-                    
-                    return (
-                      <div
-                        key={pillKey}
-                        className={`pill ${taken ? 'taken' : ''} ${wasJustUntaken ? 'untaking' : ''}`}
-                        style={{ backgroundColor: medicine.color }}
-                        onClick={() => toggleTaken(medicine.id, day, timeSlot)}
-                        title={`${medicine.name} - ${medicine.dosage}${medicine.notes ? '\n' + medicine.notes : ''}${taken ? '\nTaken: ' + taken + '\nClick to mark as not taken' : '\nClick to mark as taken'}`}
-                      >
-                        <span className="pill-label">{medicine.name.charAt(0).toUpperCase()}</span>
-                        <span className="pill-dosage">{medicine.dosage}</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              ))}
+              <div className={`day-label ${day === currentDay ? 'current-day' : ''}`}>
+                {day}
+                {day === currentDay && <span className="current-indicator"> ●</span>}
+              </div>
+              {timeSlots.map(timeSlot => {
+                const isCurrentSlot = day === currentDay && timeSlot === currentTimeSlot
+                return (
+                  <div 
+                    key={`${day}-${timeSlot}`} 
+                    className={`pill-slot ${isCurrentSlot ? 'current-slot' : ''}`}
+                  >
+                    {getMedicinesForSlot(day, timeSlot).map(medicine => {
+                      const taken = isTaken(medicine.id, day, timeSlot)
+                      const pillKey = `${medicine.id}-${day}-${timeSlot}`
+                      const isAnimating = animatingPills.has(pillKey)
+                      const wasJustTaken = taken && isAnimating
+                      const wasJustUntaken = !taken && isAnimating
+                      
+                      return (
+                        <div
+                          key={pillKey}
+                          className={`pill ${taken ? 'taken' : ''} ${wasJustUntaken ? 'untaking' : ''}`}
+                          style={{ backgroundColor: medicine.color }}
+                          onClick={() => toggleTaken(medicine.id, day, timeSlot)}
+                          title={`${medicine.name} - ${medicine.dosage}${medicine.notes ? '\n' + medicine.notes : ''}${taken ? '\nTaken: ' + taken + '\nClick to mark as not taken' : '\nClick to mark as taken'}`}
+                        >
+                          <span className="pill-label">{medicine.name.charAt(0).toUpperCase()}</span>
+                          <span className="pill-dosage">{medicine.dosage}</span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })}
             </div>
           ))}
         </div>

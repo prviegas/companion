@@ -196,6 +196,8 @@ textarea.form-input {
   align-items: center;
   justify-content: center;
   background-color: var(--surface-color);
+  position: relative;
+  z-index: 1;
 }
 
 .pill-slot:last-child {
@@ -256,6 +258,54 @@ textarea.form-input {
 .pill.taken:hover {
   transform: scale(1.0);
   opacity: 0.8;
+}
+
+/* Current Day/Time Highlighting */
+.time-header.current-time {
+  background-color: var(--success-color) !important;
+  color: white;
+  box-shadow: 0 0 0 2px var(--success-color);
+  position: relative;
+}
+
+.day-label.current-day {
+  background-color: var(--success-color);
+  color: white;
+  box-shadow: 0 0 0 2px var(--success-color);
+  position: relative;
+}
+
+.pill-slot.current-slot {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+  border: 2px solid var(--success-color);
+  box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.2);
+  animation: currentSlotPulse 2s ease-in-out infinite;
+  position: relative;
+  z-index: 10;
+}
+
+.current-indicator {
+  color: var(--warning-color);
+  font-size: 0.8em;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes currentSlotPulse {
+  0%, 100% {
+    box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.2), 0 0 0 2px var(--success-color);
+  }
+  50% {
+    box-shadow: inset 0 0 20px rgba(16, 185, 129, 0.4), 0 0 0 3px var(--success-color);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* Keyframe animations */
