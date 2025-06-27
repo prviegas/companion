@@ -33,17 +33,35 @@ const loadNotesFromStorage = () => {
   }
 }
 
-function NotesSection({ isReadOnly = false }) {
-  const [notes, setNotes] = useState(() => loadNotesFromStorage())
+function NotesSection({ isReadOnly = false, sharedToolData = null }) {
+  // Use shared data if available, otherwise load from storage/cloud
+  const [notes, setNotes] = useState(() => {
+    if (sharedToolData?.notes) {
+      console.log('📝 NotesSection using shared data:', sharedToolData.notes)
+      return sharedToolData.notes
+    }
+    return loadNotesFromStorage()
+  })
   const [showManageModal, setShowManageModal] = useState(false)
 
-  // Cloud sync for notes
-  useCloudSync('notes', notes, setNotes)
+  // Cloud sync for notes (only when not using shared data)
+  const shouldUseCloudSync = !sharedToolData
+  useCloudSync(shouldUseCloudSync ? 'notes' : null, shouldUseCloudSync ? notes : null, shouldUseCloudSync ? setNotes : null)
 
-  // Save notes to localStorage whenever notes changes (backup)
+  // Update notes when shared data changes
   useEffect(() => {
-    saveNotesToStorage(notes)
-  }, [notes])
+    if (sharedToolData?.notes) {
+      console.log('📝 NotesSection updating with shared data:', sharedToolData.notes)
+      setNotes(sharedToolData.notes)
+    }
+  }, [sharedToolData])
+
+  // Only save to localStorage when not using shared data
+  useEffect(() => {
+    if (!sharedToolData) {
+      saveNotesToStorage(notes)
+    }
+  }, [notes, sharedToolData])
 
   const addNote = (note) => {
     setNotes([note, ...notes])

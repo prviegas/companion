@@ -80,9 +80,23 @@ const getCurrentTimeSlot = () => {
   }
 }
 
-function MedicineReminder({ isReadOnly = false }) {
-  const [medicines, setMedicines] = useState(() => loadMedicinesFromStorage())
-  const [takenMedicines, setTakenMedicines] = useState(() => loadTakenFromStorage())
+function MedicineReminder({ isReadOnly = false, sharedToolData = null }) {
+  // Use shared data if available, otherwise load from storage/cloud
+  const [medicines, setMedicines] = useState(() => {
+    if (sharedToolData?.medicineReminders) {
+      console.log('💊 MedicineReminder using shared medicine data:', sharedToolData.medicineReminders)
+      return sharedToolData.medicineReminders
+    }
+    return loadMedicinesFromStorage()
+  })
+  
+  const [takenMedicines, setTakenMedicines] = useState(() => {
+    if (sharedToolData?.medicineTaken) {
+      console.log('✅ MedicineReminder using shared taken data:', sharedToolData.medicineTaken)
+      return sharedToolData.medicineTaken
+    }
+    return loadTakenFromStorage()
+  })
   const [showManageModal, setShowManageModal] = useState(false)
   const [animatingPills, setAnimatingPills] = useState(new Set())
 
@@ -90,19 +104,35 @@ function MedicineReminder({ isReadOnly = false }) {
   const currentDay = getCurrentDay()
   const currentTimeSlot = getCurrentTimeSlot()
 
-  // Cloud sync for medicines and taken medicines
-  useCloudSync('medicineReminders', medicines, setMedicines)
-  useCloudSync('medicineTaken', takenMedicines, setTakenMedicines)
+  // Cloud sync for medicines and taken medicines (only when not using shared data)
+  const shouldUseCloudSync = !sharedToolData
+  useCloudSync(shouldUseCloudSync ? 'medicineReminders' : null, shouldUseCloudSync ? medicines : null, shouldUseCloudSync ? setMedicines : null)
+  useCloudSync(shouldUseCloudSync ? 'medicineTaken' : null, shouldUseCloudSync ? takenMedicines : null, shouldUseCloudSync ? setTakenMedicines : null)
 
-  // Save to localStorage whenever medicines changes (backup)
+  // Update medicines when shared data changes
   useEffect(() => {
-    saveMedicinesToStorage(medicines)
-  }, [medicines])
+    if (sharedToolData?.medicineReminders) {
+      console.log('💊 MedicineReminder updating with shared medicine data:', sharedToolData.medicineReminders)
+      setMedicines(sharedToolData.medicineReminders)
+    }
+    if (sharedToolData?.medicineTaken) {
+      console.log('✅ MedicineReminder updating with shared taken data:', sharedToolData.medicineTaken)
+      setTakenMedicines(sharedToolData.medicineTaken)
+    }
+  }, [sharedToolData])
 
-  // Save taken medicines to localStorage whenever takenMedicines changes (backup)
+  // Save to localStorage only when not using shared data
   useEffect(() => {
-    saveTakenToStorage(takenMedicines)
-  }, [takenMedicines])
+    if (!sharedToolData) {
+      saveMedicinesToStorage(medicines)
+    }
+  }, [medicines, sharedToolData])
+
+  useEffect(() => {
+    if (!sharedToolData) {
+      saveTakenToStorage(takenMedicines)
+    }
+  }, [takenMedicines, sharedToolData])
 
   const addMedicine = (medicine) => {
     setMedicines([...medicines, medicine])

@@ -42,13 +42,26 @@ const loadWindowSettings = () => {
   }
 }
 
-function IFoodHelper({ isReadOnly = false }) {
+function IFoodHelper({ isReadOnly = false, sharedToolData = null }) {
   // Window settings (stored in localStorage for immediate access)
   const [windowSettings, setWindowSettings] = useState(() => loadWindowSettings())
   
-  // Favorites data and loading state
-  const [favorites, setFavorites] = useState([]) // Favorite restaurants
-  const [favoriteDishes, setFavoriteDishes] = useState([]) // Favorite dishes/food items
+  // Favorites data and loading state - use shared data if available
+  const [favorites, setFavorites] = useState(() => {
+    if (sharedToolData?.ifoodFavorites) {
+      console.log('🍔 IFoodHelper using shared favorites:', sharedToolData.ifoodFavorites)
+      return sharedToolData.ifoodFavorites
+    }
+    return []
+  })
+  
+  const [favoriteDishes, setFavoriteDishes] = useState(() => {
+    if (sharedToolData?.ifoodFavoriteDishes) {
+      console.log('🍽️ IFoodHelper using shared dishes:', sharedToolData.ifoodFavoriteDishes)
+      return sharedToolData.ifoodFavoriteDishes
+    }
+    return []
+  })
   const [isLoading, setIsLoading] = useState(true)
   
   // UI state
@@ -62,8 +75,15 @@ function IFoodHelper({ isReadOnly = false }) {
   // Get authentication context
   const { user, isAuthenticated } = useAuth()
 
-  // Load favorites from database
+  // Load favorites from database or use shared data
   const loadFavorites = async () => {
+    // If we have shared data, don't load from database
+    if (sharedToolData) {
+      console.log('🍔 Using shared tool data, skipping database load')
+      setIsLoading(false)
+      return
+    }
+    
     if (!isAuthenticated || !user) {
       console.log('🍔 User not authenticated, skipping load')
       setIsLoading(false)
@@ -157,6 +177,18 @@ function IFoodHelper({ isReadOnly = false }) {
   useEffect(() => {
     loadFavorites()
   }, [user, isAuthenticated])
+
+  // Update favorites when shared data changes
+  useEffect(() => {
+    if (sharedToolData?.ifoodFavorites) {
+      console.log('🍔 IFoodHelper updating with shared favorites:', sharedToolData.ifoodFavorites)
+      setFavorites(sharedToolData.ifoodFavorites)
+    }
+    if (sharedToolData?.ifoodFavoriteDishes) {
+      console.log('🍽️ IFoodHelper updating with shared dishes:', sharedToolData.ifoodFavoriteDishes)
+      setFavoriteDishes(sharedToolData.ifoodFavoriteDishes)
+    }
+  }, [sharedToolData])
 
   // Save window settings to localStorage when they change
   useEffect(() => {

@@ -50,7 +50,7 @@ function AppContent() {
   const [sharedBoardData, setSharedBoardData] = useState(null)
   const [sharedBoardOwner, setSharedBoardOwner] = useState('')
   const [isViewingSharedBoard, setIsViewingSharedBoard] = useState(false)
-  const [toolDataRefreshKey, setToolDataRefreshKey] = useState(0) // Force tool re-render
+  const [sharedToolData, setSharedToolData] = useState(null) // Store shared tool data
   
   const { user, isAuthenticated, loading } = useAuth()
 
@@ -331,49 +331,21 @@ function AppContent() {
         createdAt: shareData.createdAt
       })
 
-      // Populate localStorage with shared tool data so tools can access it
+      // Store shared tool data in state instead of localStorage
       if (shareData.toolData) {
-        console.log('📦 Populating tool data from shared board...')
+        console.log('📦 Storing shared tool data in state...')
+        setSharedToolData(shareData.toolData)
         
-        // Store each tool's data in localStorage with special shared prefix
-        if (shareData.toolData.notes) {
-          localStorage.setItem('notes', JSON.stringify(shareData.toolData.notes))
-          console.log('📝 Loaded shared notes:', shareData.toolData.notes.length)
-        }
-        
-        if (shareData.toolData.medicineReminders) {
-          localStorage.setItem('medicineReminders', JSON.stringify(shareData.toolData.medicineReminders))
-          console.log('💊 Loaded shared medicine reminders:', shareData.toolData.medicineReminders.length)
-        }
-        
-        if (shareData.toolData.medicineTaken) {
-          localStorage.setItem('medicineTaken', JSON.stringify(shareData.toolData.medicineTaken))
-          console.log('✅ Loaded shared medicine taken data')
-        }
-        
-        if (shareData.toolData.marketLists) {
-          localStorage.setItem('marketListItems', JSON.stringify(shareData.toolData.marketLists))
-          console.log('🛒 Loaded shared market list:', shareData.toolData.marketLists.length)
-        }
-        
-        if (shareData.toolData.ifoodFavorites) {
-          localStorage.setItem('ifoodFavorites', JSON.stringify(shareData.toolData.ifoodFavorites))
-          console.log('🍔 Loaded shared iFood favorites:', shareData.toolData.ifoodFavorites.length)
-        }
-        
-        if (shareData.toolData.ifoodFavoriteDishes) {
-          localStorage.setItem('ifoodFavoriteDishes', JSON.stringify(shareData.toolData.ifoodFavoriteDishes))
-          console.log('🍽️ Loaded shared iFood favorite dishes:', shareData.toolData.ifoodFavoriteDishes.length)
-        }
+        console.log('📝 Shared notes count:', shareData.toolData.notes?.length || 0)
+        console.log('💊 Shared medicine reminders count:', shareData.toolData.medicineReminders?.length || 0)
+        console.log('🛒 Shared market list count:', shareData.toolData.marketLists?.length || 0)
+        console.log('🍔 Shared iFood favorites count:', shareData.toolData.ifoodFavorites?.length || 0)
       }
 
       setSharedBoardData(shareData.tools || [])
       setSharedBoardOwner(shareData.ownerEmail || 'Unknown')
       setIsViewingSharedBoard(true)
       setSelectedTools(shareData.tools || [])
-      
-      // Force tools to refresh their data from localStorage
-      setToolDataRefreshKey(prev => prev + 1)
       
       console.log('✅ Shared board loaded successfully with all tool data')
     } catch (error) {
@@ -430,20 +402,12 @@ function AppContent() {
     setIsViewingSharedBoard(false)
     setSharedBoardData(null)
     setSharedBoardOwner('')
+    setSharedToolData(null) // Clear shared tool data
     
     // Remove share parameter from URL
     const url = new URL(window.location)
     url.searchParams.delete('shared')
     window.history.replaceState({}, '', url)
-    
-    // Clear shared data from localStorage
-    console.log('🧹 Clearing shared tool data from localStorage...')
-    localStorage.removeItem('notes')
-    localStorage.removeItem('medicineReminders')
-    localStorage.removeItem('medicineTaken')
-    localStorage.removeItem('marketListItems')
-    localStorage.removeItem('ifoodFavorites')
-    localStorage.removeItem('ifoodFavoriteDishes')
     
     // Reload user's own data
     if (isAuthenticated && user) {
@@ -453,9 +417,6 @@ function AppContent() {
       // If not authenticated, just clear the tools
       setSelectedTools([])
     }
-    
-    // Force tools to refresh their data
-    setToolDataRefreshKey(prev => prev + 1)
     
     console.log('✅ Exited shared board mode successfully')
   }
@@ -508,7 +469,7 @@ function AppContent() {
         onRemoveTool={removeTool}
         onUpdateTool={updateTool}
         isReadOnly={isViewingSharedBoard}
-        toolDataRefreshKey={toolDataRefreshKey}
+        sharedToolData={sharedToolData}
       />
 
       {/* Share Modal */}

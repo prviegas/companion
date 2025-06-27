@@ -105,7 +105,7 @@ function ResizeSelector({ isOpen, onClose, onResize, currentWidth = 2, currentHe
 }
 
 // Draggable Tool Component
-function DraggableTool({ tool, index, onMove, onResize, onRemove, isReadOnly = false, toolDataRefreshKey = 0 }) {
+function DraggableTool({ tool, index, onMove, onResize, onRemove, isReadOnly = false, sharedToolData = null }) {
   const [showResizeSelector, setShowResizeSelector] = useState(false)
   
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -176,7 +176,7 @@ function DraggableTool({ tool, index, onMove, onResize, onRemove, isReadOnly = f
           )}
         </div>
         <div className="tool-content">
-          <ToolComponent isReadOnly={isReadOnly} key={`${tool.id}-${toolDataRefreshKey}`} />
+          <ToolComponent isReadOnly={isReadOnly} sharedToolData={sharedToolData} />
         </div>
       </div>
       
@@ -232,7 +232,7 @@ function DropTile({ index, isOccupied, onDrop }) {
 }
 
 // Main Grid Component
-function MainGrid({ tools, onRemoveTool, onUpdateTool, isReadOnly = false, toolDataRefreshKey = 0 }) {
+function MainGrid({ tools, onRemoveTool, onUpdateTool, isReadOnly = false, sharedToolData = null }) {
   // Create a simple array mapping tools to grid positions
   const [toolPositions, setToolPositions] = useState(() => {
     const positions = new Array(TOTAL_TILES).fill(null)
@@ -386,7 +386,7 @@ function MainGrid({ tools, onRemoveTool, onUpdateTool, isReadOnly = false, toolD
                 onResize={handleResize}
                 onRemove={onRemoveTool}
                 isReadOnly={isReadOnly}
-                toolDataRefreshKey={toolDataRefreshKey}
+                sharedToolData={sharedToolData}
               />
             ) : null
           )}

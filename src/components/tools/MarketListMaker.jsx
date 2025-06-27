@@ -34,19 +34,37 @@ const loadItemsFromStorage = () => {
   }
 }
 
-function MarketListMaker({ isReadOnly = false }) {
-  const [items, setItems] = useState(() => loadItemsFromStorage())
+function MarketListMaker({ isReadOnly = false, sharedToolData = null }) {
+  // Use shared data if available, otherwise load from storage/cloud
+  const [items, setItems] = useState(() => {
+    if (sharedToolData?.marketLists) {
+      console.log('🛒 MarketListMaker using shared data:', sharedToolData.marketLists)
+      return sharedToolData.marketLists
+    }
+    return loadItemsFromStorage()
+  })
   const [newItem, setNewItem] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [editingText, setEditingText] = useState('')
 
-  // Cloud sync for market list items
-  useCloudSync('marketLists', items, setItems)
+  // Cloud sync for market list items (only when not using shared data)
+  const shouldUseCloudSync = !sharedToolData
+  useCloudSync(shouldUseCloudSync ? 'marketLists' : null, shouldUseCloudSync ? items : null, shouldUseCloudSync ? setItems : null)
 
-  // Save items to localStorage whenever items changes (backup)
+  // Update items when shared data changes
   useEffect(() => {
-    saveItemsToStorage(items)
-  }, [items])
+    if (sharedToolData?.marketLists) {
+      console.log('🛒 MarketListMaker updating with shared data:', sharedToolData.marketLists)
+      setItems(sharedToolData.marketLists)
+    }
+  }, [sharedToolData])
+
+  // Save items to localStorage only when not using shared data
+  useEffect(() => {
+    if (!sharedToolData) {
+      saveItemsToStorage(items)
+    }
+  }, [items, sharedToolData])
 
   const addItem = () => {
     if (newItem.trim()) {

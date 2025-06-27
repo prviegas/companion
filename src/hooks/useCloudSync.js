@@ -13,7 +13,7 @@ export const useCloudSync = (toolKey, data, setData) => {
 
   // Save data to cloud whenever it changes
   useEffect(() => {
-    if (isAuthenticated && user && data !== null && data !== undefined) {
+    if (toolKey && isAuthenticated && user && data !== null && data !== undefined) {
       const saveToCloud = async () => {
         try {
           const userData = { [toolKey]: data }
@@ -32,7 +32,7 @@ export const useCloudSync = (toolKey, data, setData) => {
 
   // Load data from cloud when user logs in
   const loadFromCloud = useCallback(async () => {
-    if (isAuthenticated && user) {
+    if (toolKey && isAuthenticated && user) {
       try {
         const cloudData = await cloudSync.loadUserData(user.uid)
         if (cloudData && cloudData[toolKey]) {
@@ -49,8 +49,10 @@ export const useCloudSync = (toolKey, data, setData) => {
 
   // Load data when user changes
   useEffect(() => {
-    loadFromCloud()
-  }, [loadFromCloud])
+    if (toolKey) {
+      loadFromCloud()
+    }
+  }, [loadFromCloud, toolKey])
 
   return { loadFromCloud }
 }
