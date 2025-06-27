@@ -65,10 +65,19 @@ function AppContent() {
     const urlParams = new URLSearchParams(window.location.search)
     const shareId = urlParams.get('shared')
     
+    console.log('🔍 Checking URL for shared board parameter')
+    console.log('🔍 Current URL:', window.location.href)
+    console.log('🔍 URL search params:', window.location.search)
+    console.log('🔍 Extracted shareId:', shareId)
+    
     if (shareId) {
+      console.log('📋 Found shared board parameter, loading:', shareId)
+      // Load shared board immediately, regardless of authentication status
       loadSharedBoard(shareId)
+    } else {
+      console.log('📋 No shared board parameter found')
     }
-  }, [])
+  }, []) // Don't depend on auth state for initial shared board check
 
   // Auto-save to cloud whenever data changes (but not for shared boards)
   useEffect(() => {
@@ -222,7 +231,19 @@ function AppContent() {
         isActive: true
       }
 
-      await cloudSync.saveShareData(shareId, shareData)
+      console.log('💾 Attempting to save share data:', {
+        shareId,
+        ownerEmail: shareData.ownerEmail,
+        toolsCount: shareData.tools.length,
+        isActive: shareData.isActive
+      })
+
+      const saveResult = await cloudSync.saveShareData(shareId, shareData)
+      
+      if (!saveResult) {
+        throw new Error('Failed to save share data')
+      }
+
       const link = `${window.location.origin}${window.location.pathname}?shared=${shareId}`
       setShareLink(link)
       
@@ -231,7 +252,7 @@ function AppContent() {
       userShares.push({ shareId, createdAt: shareData.createdAt, isActive: true })
       await cloudSync.saveUserShares(user.uid, userShares)
 
-      console.log('✅ Share link generated:', link)
+      console.log('✅ Share link generated successfully:', link)
     } catch (error) {
       console.error('❌ Failed to generate share link:', error)
       alert('Failed to generate share link. Please try again.')
@@ -245,8 +266,10 @@ function AppContent() {
       console.log('🔄 Loading shared board:', shareId)
       const shareData = await cloudSync.loadShareData(shareId)
       
-      if (!shareData || !shareData.isActive) {
-        console.warn('⚠️ Share link is invalid or expired')
+      console.log('📋 Share data received:', shareData)
+      
+      if (!shareData) {
+        console.warn('⚠️ No share data found for shareId:', shareId)
         alert('This share link is invalid or has been disabled.')
         // Remove share parameter from URL
         const url = new URL(window.location)
@@ -254,6 +277,22 @@ function AppContent() {
         window.history.replaceState({}, '', url)
         return
       }
+
+      if (!shareData.isActive) {
+        console.warn('⚠️ Share link is disabled:', shareId)
+        alert('This share link has been disabled by the owner.')
+        // Remove share parameter from URL
+        const url = new URL(window.location)
+        url.searchParams.delete('shared')
+        window.history.replaceState({}, '', url)
+        return
+      }
+
+      console.log('✅ Valid share data found:', {
+        ownerEmail: shareData.ownerEmail,
+        toolsCount: shareData.tools?.length || 0,
+        createdAt: shareData.createdAt
+      })
 
       setSharedBoardData(shareData.tools || [])
       setSharedBoardOwner(shareData.ownerEmail || 'Unknown')
@@ -325,8 +364,8 @@ function AppContent() {
     }
   }
 
-  // Show loading screen while checking authentication
-  if (loading || (isAuthenticated && !dataLoaded)) {
+  // Show loading screen while checking authentication (but not for shared boards)
+  if (loading || (isAuthenticated && !dataLoaded && !isViewingSharedBoard)) {
     return (
       <div className="app-loading">
         <div className="loading-content">
@@ -337,8 +376,8 @@ function AppContent() {
     )
   }
 
-  // Show login screen if not authenticated
-  if (!isAuthenticated) {
+  // Show login screen if not authenticated AND not viewing a shared board
+  if (!isAuthenticated && !isViewingSharedBoard) {
     return (
       <div className="app">
         <div className="auth-required">

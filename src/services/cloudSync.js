@@ -141,9 +141,10 @@ class CloudSyncService {
   // Sharing functions
   async saveShareData(shareId, shareData) {
     try {
+      console.log('🔄 Saving share data to Firestore:', shareId, shareData)
       const shareDocRef = doc(db, 'shares', shareId)
       await setDoc(shareDocRef, shareData, { merge: true })
-      console.log('☁️ Share data saved successfully')
+      console.log('☁️ Share data saved successfully to collection "shares" with id:', shareId)
       return true
     } catch (error) {
       console.error('❌ Error saving share data:', error)
@@ -153,19 +154,22 @@ class CloudSyncService {
 
   async loadShareData(shareId) {
     try {
+      console.log('🔄 Loading share data from Firestore:', shareId)
       const shareDocRef = doc(db, 'shares', shareId)
       const docSnap = await getDoc(shareDocRef)
       
       if (docSnap.exists()) {
         const data = docSnap.data()
-        console.log('☁️ Share data loaded successfully')
+        console.log('☁️ Share data loaded successfully:', data)
         return data
       } else {
-        console.log('📄 No share data found')
+        console.log('📄 No share data found for shareId:', shareId)
+        console.log('📄 Document path checked:', `shares/${shareId}`)
         return null
       }
     } catch (error) {
       console.error('❌ Error loading share data:', error)
+      console.error('❌ Error details:', error.message)
       return null
     }
   }
