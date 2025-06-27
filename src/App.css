@@ -224,3 +224,43 @@ body {
   font-size: var(--font-size-lg);
   line-height: 1.6;
 }
+
+/* Loading Screen */
+.app-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  background: var(--background-color);
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--spacing-md);
+}
+
+.loading-icon {
+  font-size: 3rem;
+  display: block;
+  animation: spin 2s linear infinite;
+}
+
+.loading-content p {
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+  margin: 0;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
