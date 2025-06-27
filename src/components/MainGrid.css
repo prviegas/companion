@@ -254,6 +254,7 @@
   flex-direction: column;
   gap: var(--spacing-xs);
   margin-bottom: var(--spacing-md);
+  position: relative;
 }
 
 .resize-row {
@@ -262,8 +263,8 @@
 }
 
 .resize-cell {
-  width: 60px;
-  height: 60px;
+  width: 40px;
+  height: 40px;
   background-color: var(--background-color);
   border: 2px solid var(--border-color);
   border-radius: var(--border-radius);
@@ -272,7 +273,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  position: relative;
 }
 
 .resize-cell:hover {
@@ -282,100 +283,24 @@
 
 .resize-cell.current {
   border-color: var(--success-color);
-  background-color: rgba(16, 185, 129, 0.1);
+  background-color: rgba(16, 185, 129, 0.2);
 }
 
-.resize-preview {
-  display: grid;
-  gap: 2px;
-  width: 100%;
-  height: 100%;
+/* Google Docs style selection preview */
+.resize-grid .resize-cell.preview-selected {
+  background-color: rgba(59, 130, 246, 0.2);
+  border-color: var(--primary-color);
 }
 
-.resize-cell[title="1 × 1"] .resize-preview {
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr;
+.resize-grid:hover .resize-cell.preview-selected {
+  background-color: rgba(59, 130, 246, 0.3);
+  border-color: var(--primary-color);
 }
 
-.resize-cell[title="2 × 1"] .resize-preview {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr;
-}
-
-.resize-cell[title="3 × 1"] .resize-preview {
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr;
-}
-
-.resize-cell[title="4 × 1"] .resize-preview {
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-template-rows: 1fr;
-}
-
-.resize-cell[title="1 × 2"] .resize-preview {
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr 1fr;
-}
-
-.resize-cell[title="2 × 2"] .resize-preview {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-}
-
-.resize-cell[title="3 × 2"] .resize-preview {
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-}
-
-.resize-cell[title="4 × 2"] .resize-preview {
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-}
-
-.resize-cell[title="1 × 3"] .resize-preview {
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
-}
-
-.resize-cell[title="2 × 3"] .resize-preview {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
-}
-
-.resize-cell[title="3 × 3"] .resize-preview {
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
-}
-
-.resize-cell[title="4 × 3"] .resize-preview {
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr;
-}
-
-.resize-cell[title="1 × 4"] .resize-preview {
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr 1fr 1fr 1fr;
-}
-
-.resize-cell[title="2 × 4"] .resize-preview {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr 1fr;
-}
-
-.resize-cell[title="3 × 4"] .resize-preview {
-  grid-template-columns: 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr 1fr;
-}
-
-.resize-cell[title="4 × 4"] .resize-preview {
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  grid-template-rows: 1fr 1fr 1fr 1fr;
-}
-
-.resize-preview-cell {
-  background-color: var(--primary-color);
-  border-radius: 1px;
-  opacity: 0.6;
+.resize-grid .resize-cell.current {
+  background-color: rgba(16, 185, 129, 0.4) !important;
+  border-color: var(--success-color) !important;
+  border-width: 3px !important;
 }
 
 .resize-footer {

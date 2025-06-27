@@ -33,11 +33,24 @@ const indexToPosition = (index) => ({
 
 // Resize Selector Component
 function ResizeSelector({ isOpen, onClose, onResize, currentWidth = 2, currentHeight = 3 }) {
+  const [hoverWidth, setHoverWidth] = useState(0)
+  const [hoverHeight, setHoverHeight] = useState(0)
+  
   if (!isOpen) return null
 
   const handleSizeSelect = (width, height) => {
     onResize(width, height)
     onClose()
+  }
+
+  const handleMouseEnter = (width, height) => {
+    setHoverWidth(width + 1)
+    setHoverHeight(height + 1)
+  }
+
+  const handleMouseLeave = () => {
+    setHoverWidth(0)
+    setHoverHeight(0)
   }
 
   return (
@@ -49,30 +62,38 @@ function ResizeSelector({ isOpen, onClose, onResize, currentWidth = 2, currentHe
             <FontAwesomeIcon icon={faTimes} />
           </button>
         </div>
-        <div className="resize-grid">
+        <div className="resize-grid" onMouseLeave={handleMouseLeave}>
           {Array.from({ length: 4 }, (_, height) => (
             <div key={height} className="resize-row">
-              {Array.from({ length: 4 }, (_, width) => (
-                <button
-                  key={`${width}-${height}`}
-                  className={`resize-cell ${
-                    width + 1 === currentWidth && height + 1 === currentHeight ? 'current' : ''
-                  }`}
-                  onClick={() => handleSizeSelect(width + 1, height + 1)}
-                  title={`${width + 1} × ${height + 1}`}
-                >
-                  <div className="resize-preview">
-                    {Array.from({ length: (width + 1) * (height + 1) }, (_, i) => (
-                      <div key={i} className="resize-preview-cell" />
-                    ))}
-                  </div>
-                </button>
-              ))}
+              {Array.from({ length: 4 }, (_, width) => {
+                const isInCurrentSize = width < currentWidth && height < currentHeight
+                const isHovered = hoverWidth > 0 && hoverHeight > 0 && 
+                                 width < hoverWidth && height < hoverHeight
+                const isCornerCell = width + 1 === currentWidth && height + 1 === currentHeight
+                
+                // Show current size area when not hovering, hovered area when hovering
+                const shouldHighlight = hoverWidth > 0 ? isHovered : isInCurrentSize
+                
+                return (
+                  <button
+                    key={`${width}-${height}`}
+                    className={`resize-cell ${isCornerCell ? 'current' : ''} ${shouldHighlight ? 'preview-selected' : ''}`}
+                    onClick={() => handleSizeSelect(width + 1, height + 1)}
+                    onMouseEnter={() => handleMouseEnter(width, height)}
+                    title={`${width + 1} × ${height + 1}`}
+                  >
+                  </button>
+                )
+              })}
             </div>
           ))}
         </div>
         <div className="resize-footer">
-          <span className="resize-hint">Click to select size</span>
+          <span className="resize-hint">
+            {hoverWidth > 0 && hoverHeight > 0 
+              ? `${hoverWidth} × ${hoverHeight}` 
+              : "Hover to preview size"}
+          </span>
         </div>
       </div>
     </div>
