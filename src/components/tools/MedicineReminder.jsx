@@ -3,6 +3,7 @@ import './MedicineReminder.css'
 import { useCloudSync } from '../../hooks/useCloudSync'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faTrash } from '@fortawesome/free-solid-svg-icons'
+import MedicineModal from './MedicineModal'
 
 // Utility functions for localStorage
 const STORAGE_KEY = 'medicineReminders'
@@ -82,15 +83,8 @@ const getCurrentTimeSlot = () => {
 function MedicineReminder() {
   const [medicines, setMedicines] = useState(() => loadMedicinesFromStorage())
   const [takenMedicines, setTakenMedicines] = useState(() => loadTakenFromStorage())
-  const [showAddForm, setShowAddForm] = useState(false)
+  const [showManageModal, setShowManageModal] = useState(false)
   const [animatingPills, setAnimatingPills] = useState(new Set())
-  const [newMedicine, setNewMedicine] = useState({
-    name: '',
-    dosage: '',
-    timeSlots: [],
-    color: '#6366f1',
-    notes: ''
-  })
 
   // Get current day and time slot for highlighting
   const currentDay = getCurrentDay()
@@ -110,21 +104,12 @@ function MedicineReminder() {
     saveTakenToStorage(takenMedicines)
   }, [takenMedicines])
 
-  const addMedicine = () => {
-    if (newMedicine.name.trim() && newMedicine.dosage.trim() && newMedicine.timeSlots.length > 0) {
-      const medicine = {
-        id: Date.now(),
-        name: newMedicine.name.trim(),
-        dosage: newMedicine.dosage.trim(),
-        timeSlots: newMedicine.timeSlots,
-        color: newMedicine.color,
-        notes: newMedicine.notes.trim(),
-        createdAt: new Date().toLocaleString()
-      }
-      setMedicines([...medicines, medicine])
-      setNewMedicine({ name: '', dosage: '', timeSlots: [], color: '#6366f1', notes: '' })
-      setShowAddForm(false)
-    }
+  const addMedicine = (medicine) => {
+    setMedicines([...medicines, medicine])
+  }
+
+  const updateMedicine = (updatedMedicine) => {
+    setMedicines(medicines.map(m => m.id === updatedMedicine.id ? updatedMedicine : m))
   }
 
   const deleteMedicine = (id) => {
@@ -196,114 +181,31 @@ function MedicineReminder() {
     return medicines.filter(medicine => medicine.timeSlots && medicine.timeSlots.includes(timeSlot))
   }
 
-  const resetForm = () => {
-    setNewMedicine({ name: '', dosage: '', timeSlots: [], color: '#6366f1', notes: '' })
-    setShowAddForm(false)
-  }
-
   return (
     <div className="medicine-reminder">
       <div className="medicine-header">
         <button
-          onClick={() => setShowAddForm(!showAddForm)}
+          onClick={() => setShowManageModal(true)}
           className="btn btn-primary btn-sm"
         >
-          {showAddForm ? 'Cancel' : '+ Add Medicine'}
+          Manage Medicine
         </button>
       </div>
 
-      {showAddForm && (
-        <div className="add-medicine-form">
-          <h4>Add New Medicine</h4>
-          <div className="form-grid">
-            <div className="form-group">
-              <label htmlFor="medicine-name">Medicine Name *</label>
-              <input
-                id="medicine-name"
-                type="text"
-                value={newMedicine.name}
-                onChange={(e) => setNewMedicine({ ...newMedicine, name: e.target.value })}
-                placeholder="e.g., Aspirin"
-                className="form-input"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="medicine-dosage">Dosage *</label>
-              <input
-                id="medicine-dosage"
-                type="text"
-                value={newMedicine.dosage}
-                onChange={(e) => setNewMedicine({ ...newMedicine, dosage: e.target.value })}
-                placeholder="e.g., 100mg"
-                className="form-input"
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="medicine-color">Pill Color</label>
-              <input
-                id="medicine-color"
-                type="color"
-                value={newMedicine.color}
-                onChange={(e) => setNewMedicine({ ...newMedicine, color: e.target.value })}
-                className="form-input color-input"
-              />
-            </div>
-
-            <div className="form-group form-group-full">
-              <label>When to take *</label>
-              <div className="time-slots">
-                {timeSlots.map(slot => (
-                  <button
-                    key={slot}
-                    type="button"
-                    onClick={() => toggleTimeSlot(slot)}
-                    className={`time-slot-btn ${newMedicine.timeSlots.includes(slot) ? 'selected' : ''}`}
-                  >
-                    {slot.charAt(0).toUpperCase() + slot.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="form-group form-group-full">
-              <label htmlFor="medicine-notes">Notes</label>
-              <textarea
-                id="medicine-notes"
-                value={newMedicine.notes}
-                onChange={(e) => setNewMedicine({ ...newMedicine, notes: e.target.value })}
-                placeholder="Any additional notes about this medicine..."
-                className="form-input"
-                rows="2"
-              />
-            </div>
-          </div>
-
-          <div className="form-actions">
-            <button
-              onClick={addMedicine}
-              className="btn btn-primary"
-              disabled={!newMedicine.name.trim() || !newMedicine.dosage.trim() || newMedicine.timeSlots.length === 0}
-            >
-              Add Medicine
-            </button>
-            <button
-              onClick={resetForm}
-              className="btn btn-secondary"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Medicine Modal */}
+      <MedicineModal
+        isOpen={showManageModal}
+        onClose={() => setShowManageModal(false)}
+        medicines={medicines}
+        onAddMedicine={addMedicine}
+        onUpdateMedicine={updateMedicine}
+        onDeleteMedicine={deleteMedicine}
+      />
 
       {medicines.length === 0 ? (
         <div className="empty-list">
           <span className="empty-icon">💊</span>
-          <p>No medicines added yet. Click "Add Medicine" to create your weekly pill organizer!</p>
+          <p>No medicines added yet. Click "Manage Medicine" to create your weekly pill organizer!</p>
         </div>
       ) : (
         <div className="pill-organizer">
@@ -356,36 +258,6 @@ function MedicineReminder() {
                   </div>
                 )
               })}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {medicines.length > 0 && (
-        <div className="medicine-list">
-          <h4>Your Medicines</h4>
-          {medicines.map((medicine) => (
-            <div key={medicine.id} className="medicine-summary">
-              <div className="medicine-info">
-                <div 
-                  className="medicine-color-indicator" 
-                  style={{ backgroundColor: medicine.color }}
-                ></div>
-                <div>
-                  <span className="medicine-name">{medicine.name}</span>
-                  <span className="medicine-dosage">{medicine.dosage}</span>
-                  <span className="medicine-schedule">
-                    {medicine.timeSlots ? medicine.timeSlots.join(', ') : 'No schedule set'}
-                  </span>
-                </div>
-              </div>
-              <button
-                onClick={() => deleteMedicine(medicine.id)}
-                className="btn btn-danger btn-sm"
-                aria-label={`Delete ${medicine.name}`}
-              >
-                <FontAwesomeIcon icon={faTrash} />
-              </button>
             </div>
           ))}
         </div>
