@@ -134,7 +134,7 @@ textarea.form-input {
   background-color: var(--surface-color);
   border: 2px solid var(--border-color);
   border-radius: var(--border-radius);
-  overflow: hidden;
+  overflow: auto;
   margin-bottom: var(--spacing-lg);
 }
 
