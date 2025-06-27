@@ -119,6 +119,14 @@ function AppContent() {
     console.log('✅ Tool removed:', toolId)
   }
 
+  const updateTool = (updatedTool) => {
+    const newTools = selectedTools.map(tool => 
+      tool.id === updatedTool.id ? { ...tool, ...updatedTool } : tool
+    )
+    setSelectedTools(newTools)
+    console.log('✅ Tool updated:', updatedTool.name, updatedTool)
+  }
+
   // Show loading screen while checking authentication
   if (loading || (isAuthenticated && !dataLoaded)) {
     return (
@@ -163,6 +171,7 @@ function AppContent() {
       <MainGrid 
         tools={selectedTools}
         onRemoveTool={removeTool}
+        onUpdateTool={updateTool}
       />
     </div>
   )
