@@ -50,6 +50,7 @@ function AppContent() {
   const [sharedBoardData, setSharedBoardData] = useState(null)
   const [sharedBoardOwner, setSharedBoardOwner] = useState('')
   const [isViewingSharedBoard, setIsViewingSharedBoard] = useState(false)
+  const [toolDataRefreshKey, setToolDataRefreshKey] = useState(0) // Force tool re-render
   
   const { user, isAuthenticated, loading } = useAuth()
 
@@ -97,6 +98,27 @@ function AppContent() {
       if (userData) {
         console.log('✅ User data loaded:', userData)
         setSelectedTools(userData.selectedTools || [])
+        
+        // Restore user's tool data to localStorage
+        console.log('📦 Restoring user tool data to localStorage...')
+        if (userData.notes) {
+          localStorage.setItem('notes', JSON.stringify(userData.notes))
+        }
+        if (userData.medicineReminders) {
+          localStorage.setItem('medicineReminders', JSON.stringify(userData.medicineReminders))
+        }
+        if (userData.medicineTaken) {
+          localStorage.setItem('medicineTaken', JSON.stringify(userData.medicineTaken))
+        }
+        if (userData.marketLists) {
+          localStorage.setItem('marketListItems', JSON.stringify(userData.marketLists))
+        }
+        if (userData.ifoodFavorites) {
+          localStorage.setItem('ifoodFavorites', JSON.stringify(userData.ifoodFavorites))
+        }
+        if (userData.ifoodFavoriteDishes) {
+          localStorage.setItem('ifoodFavoriteDishes', JSON.stringify(userData.ifoodFavoriteDishes))
+        }
       } else {
         console.log('ℹ️ No existing user data found, starting fresh')
         setSelectedTools([])
@@ -223,10 +245,23 @@ function AppContent() {
     setIsGeneratingShare(true)
     try {
       const shareId = `share_${user.uid}_${Date.now()}`
+      
+      // Load all user data including tool-specific data
+      const userData = await cloudSync.loadUserData(user.uid)
+      
       const shareData = {
         id: shareId,
         ownerEmail: user.email,
         tools: selectedTools,
+        // Include all tool-specific data
+        toolData: {
+          notes: userData?.notes || [],
+          medicineReminders: userData?.medicineReminders || [],
+          medicineTaken: userData?.medicineTaken || {},
+          marketLists: userData?.marketLists || [],
+          ifoodFavorites: userData?.ifoodFavorites || [],
+          ifoodFavoriteDishes: userData?.ifoodFavoriteDishes || []
+        },
         createdAt: new Date().toISOString(),
         isActive: true
       }
@@ -235,6 +270,7 @@ function AppContent() {
         shareId,
         ownerEmail: shareData.ownerEmail,
         toolsCount: shareData.tools.length,
+        toolDataKeys: Object.keys(shareData.toolData),
         isActive: shareData.isActive
       })
 
@@ -291,15 +327,55 @@ function AppContent() {
       console.log('✅ Valid share data found:', {
         ownerEmail: shareData.ownerEmail,
         toolsCount: shareData.tools?.length || 0,
+        toolDataKeys: shareData.toolData ? Object.keys(shareData.toolData) : [],
         createdAt: shareData.createdAt
       })
+
+      // Populate localStorage with shared tool data so tools can access it
+      if (shareData.toolData) {
+        console.log('📦 Populating tool data from shared board...')
+        
+        // Store each tool's data in localStorage with special shared prefix
+        if (shareData.toolData.notes) {
+          localStorage.setItem('notes', JSON.stringify(shareData.toolData.notes))
+          console.log('📝 Loaded shared notes:', shareData.toolData.notes.length)
+        }
+        
+        if (shareData.toolData.medicineReminders) {
+          localStorage.setItem('medicineReminders', JSON.stringify(shareData.toolData.medicineReminders))
+          console.log('💊 Loaded shared medicine reminders:', shareData.toolData.medicineReminders.length)
+        }
+        
+        if (shareData.toolData.medicineTaken) {
+          localStorage.setItem('medicineTaken', JSON.stringify(shareData.toolData.medicineTaken))
+          console.log('✅ Loaded shared medicine taken data')
+        }
+        
+        if (shareData.toolData.marketLists) {
+          localStorage.setItem('marketListItems', JSON.stringify(shareData.toolData.marketLists))
+          console.log('🛒 Loaded shared market list:', shareData.toolData.marketLists.length)
+        }
+        
+        if (shareData.toolData.ifoodFavorites) {
+          localStorage.setItem('ifoodFavorites', JSON.stringify(shareData.toolData.ifoodFavorites))
+          console.log('🍔 Loaded shared iFood favorites:', shareData.toolData.ifoodFavorites.length)
+        }
+        
+        if (shareData.toolData.ifoodFavoriteDishes) {
+          localStorage.setItem('ifoodFavoriteDishes', JSON.stringify(shareData.toolData.ifoodFavoriteDishes))
+          console.log('🍽️ Loaded shared iFood favorite dishes:', shareData.toolData.ifoodFavoriteDishes.length)
+        }
+      }
 
       setSharedBoardData(shareData.tools || [])
       setSharedBoardOwner(shareData.ownerEmail || 'Unknown')
       setIsViewingSharedBoard(true)
       setSelectedTools(shareData.tools || [])
       
-      console.log('✅ Shared board loaded successfully')
+      // Force tools to refresh their data from localStorage
+      setToolDataRefreshKey(prev => prev + 1)
+      
+      console.log('✅ Shared board loaded successfully with all tool data')
     } catch (error) {
       console.error('❌ Failed to load shared board:', error)
       alert('Failed to load shared board. The link may be invalid.')
@@ -349,6 +425,8 @@ function AppContent() {
   }
 
   const exitSharedBoard = () => {
+    console.log('🔄 Exiting shared board mode...')
+    
     setIsViewingSharedBoard(false)
     setSharedBoardData(null)
     setSharedBoardOwner('')
@@ -358,10 +436,28 @@ function AppContent() {
     url.searchParams.delete('shared')
     window.history.replaceState({}, '', url)
     
+    // Clear shared data from localStorage
+    console.log('🧹 Clearing shared tool data from localStorage...')
+    localStorage.removeItem('notes')
+    localStorage.removeItem('medicineReminders')
+    localStorage.removeItem('medicineTaken')
+    localStorage.removeItem('marketListItems')
+    localStorage.removeItem('ifoodFavorites')
+    localStorage.removeItem('ifoodFavoriteDishes')
+    
     // Reload user's own data
     if (isAuthenticated && user) {
+      console.log('🔄 Reloading user\'s own data...')
       loadUserData()
+    } else {
+      // If not authenticated, just clear the tools
+      setSelectedTools([])
     }
+    
+    // Force tools to refresh their data
+    setToolDataRefreshKey(prev => prev + 1)
+    
+    console.log('✅ Exited shared board mode successfully')
   }
 
   // Show loading screen while checking authentication (but not for shared boards)
@@ -412,6 +508,7 @@ function AppContent() {
         onRemoveTool={removeTool}
         onUpdateTool={updateTool}
         isReadOnly={isViewingSharedBoard}
+        toolDataRefreshKey={toolDataRefreshKey}
       />
 
       {/* Share Modal */}
