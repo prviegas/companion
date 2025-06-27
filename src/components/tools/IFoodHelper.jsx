@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import './IFoodHelper.css'
+import { useAuth } from '../../context/AuthContext'
+import { cloudSync } from '../../services/cloudSync'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { 
   faUtensils, 
@@ -14,61 +16,116 @@ import {
   faTrash
 } from '@fortawesome/free-solid-svg-icons'
 
-// Utility functions for localStorage
-const STORAGE_KEY = 'ifoodHelperData'
+// Utility functions for localStorage (for window settings only)
+const WINDOW_STORAGE_KEY = 'ifoodWindowSettings'
 
-const saveDataToStorage = (data) => {
+const saveWindowSettings = (settings) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-    console.log('🍔 iFood data saved successfully')
+    localStorage.setItem(WINDOW_STORAGE_KEY, JSON.stringify(settings))
     return true
   } catch (error) {
-    console.error('❌ Error saving iFood data:', error)
+    console.error('❌ Error saving window settings:', error)
     return false
   }
 }
 
-const loadDataFromStorage = () => {
+const loadWindowSettings = () => {
   try {
-    const savedData = localStorage.getItem(STORAGE_KEY)
-    if (savedData) {
-      const parsedData = JSON.parse(savedData)
-      console.log('🍔 iFood data loaded successfully')
-      return parsedData
+    const savedSettings = localStorage.getItem(WINDOW_STORAGE_KEY)
+    if (savedSettings) {
+      return JSON.parse(savedSettings)
     }
-    console.log('🍔 No saved iFood data found')
-    return {
-      windowPosition: { width: 1200, height: 800 },
-      favorites: []
-    }
+    return { width: 1200, height: 800 }
   } catch (error) {
-    console.error('❌ Error loading iFood data:', error)
-    return {
-      windowPosition: { width: 1200, height: 800 },
-      favorites: []
-    }
+    console.error('❌ Error loading window settings:', error)
+    return { width: 1200, height: 800 }
   }
 }
 
 function IFoodHelper() {
-  const [data, setData] = useState(() => {
-    const loadedData = loadDataFromStorage()
-    // Ensure windowPosition and favorites exist with default values
-    return {
-      ...loadedData,
-      windowPosition: loadedData.windowPosition || { width: 1200, height: 800 },
-      favorites: loadedData.favorites || []
-    }
-  })
+  // Window settings (stored in localStorage for immediate access)
+  const [windowSettings, setWindowSettings] = useState(() => loadWindowSettings())
+  
+  // Favorites data and loading state
+  const [favorites, setFavorites] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  
+  // UI state
   const [popupWindow, setPopupWindow] = useState(null)
   const [isWindowOpen, setIsWindowOpen] = useState(false)
   const [showAddFavorite, setShowAddFavorite] = useState(false)
   const [newFavorite, setNewFavorite] = useState({ name: '', url: '' })
 
-  // Save data to localStorage whenever data changes
+  // Get authentication context
+  const { user, isAuthenticated } = useAuth()
+
+  // Load favorites from database
+  const loadFavorites = async () => {
+    if (!isAuthenticated || !user) {
+      console.log('🍔 User not authenticated, skipping load')
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      console.log('🍔 Loading favorites from database...')
+      const userData = await cloudSync.loadUserData(user.uid)
+      
+      // Check for favorites in the new location first
+      if (userData && userData.ifoodFavorites) {
+        console.log('🍔 Favorites loaded:', userData.ifoodFavorites.length, 'items')
+        setFavorites(userData.ifoodFavorites)
+      }
+      // Check for legacy data migration
+      else if (userData && userData.ifoodHelper && userData.ifoodHelper.favorites) {
+        console.log('🔄 Migrating favorites from legacy location...')
+        const legacyFavorites = userData.ifoodHelper.favorites
+        setFavorites(legacyFavorites)
+        
+        // Save to new location and clean up old location
+        await cloudSync.saveUserData(user.uid, { 
+          ifoodFavorites: legacyFavorites,
+          ifoodHelper: null // Clear the old structure
+        })
+        console.log('✅ Migration completed successfully')
+      }
+      else {
+        console.log('🍔 No favorites found in database')
+        setFavorites([])
+      }
+    } catch (error) {
+      console.error('❌ Error loading favorites:', error)
+      setFavorites([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Save favorites to database
+  const saveFavorites = async (favoritesToSave) => {
+    if (!isAuthenticated || !user) {
+      console.log('🍔 User not authenticated, skipping save')
+      return
+    }
+
+    try {
+      console.log('🍔 Saving favorites to database:', favoritesToSave.length, 'items')
+      await cloudSync.saveUserData(user.uid, { ifoodFavorites: favoritesToSave })
+      console.log('✅ Favorites saved successfully')
+    } catch (error) {
+      console.error('❌ Error saving favorites:', error)
+    }
+  }
+
+  // Load favorites when component mounts or user changes
   useEffect(() => {
-    saveDataToStorage(data)
-  }, [data])
+    loadFavorites()
+  }, [user, isAuthenticated])
+
+  // Save window settings to localStorage when they change
+  useEffect(() => {
+    saveWindowSettings(windowSettings)
+  }, [windowSettings])
 
   // Check if the popup window is still open
   useEffect(() => {
@@ -94,7 +151,7 @@ function IFoodHelper() {
 
   const openIFoodPopup = (url = 'https://www.ifood.com.br') => {
     try {
-      const { width, height } = data.windowPosition
+      const { width, height } = windowSettings
       const left = (window.screen.width - width) / 2
       const top = (window.screen.height - height) / 2
 
@@ -134,24 +191,35 @@ function IFoodHelper() {
     setPopupWindow(null)
   }
 
-  const addFavorite = () => {
+  const addFavorite = async () => {
     if (newFavorite.name.trim() && newFavorite.url.trim()) {
-      const updatedData = {
-        ...data,
-        favorites: [...data.favorites, { ...newFavorite, id: Date.now() }]
+      const newFavoriteItem = {
+        id: Date.now(),
+        name: newFavorite.name.trim(),
+        url: newFavorite.url.trim(),
+        createdAt: new Date().toISOString()
       }
-      setData(updatedData)
+      
+      // Update local state
+      const updatedFavorites = [...favorites, newFavoriteItem]
+      setFavorites(updatedFavorites)
+      
+      // Save to database
+      await saveFavorites(updatedFavorites)
+      
+      // Reset form
       setNewFavorite({ name: '', url: '' })
       setShowAddFavorite(false)
     }
   }
 
-  const removeFavorite = (id) => {
-    const updatedData = {
-      ...data,
-      favorites: data.favorites.filter(fav => fav.id !== id)
-    }
-    setData(updatedData)
+  const removeFavorite = async (id) => {
+    // Update local state
+    const updatedFavorites = favorites.filter(fav => fav.id !== id)
+    setFavorites(updatedFavorites)
+    
+    // Save to database
+    await saveFavorites(updatedFavorites)
   }
 
   const openFavorite = (url) => {
@@ -259,10 +327,12 @@ function IFoodHelper() {
           )}
 
           <div className="favorites-list">
-            {data.favorites.length === 0 ? (
+            {isLoading ? (
+              <p className="no-favorites">Carregando favoritos...</p>
+            ) : favorites.length === 0 ? (
               <p className="no-favorites">Nenhum favorito adicionado ainda.</p>
             ) : (
-              data.favorites.map(favorite => (
+              favorites.map(favorite => (
                 <div key={favorite.id} className="favorite-item">
                   <button
                     className="favorite-btn"

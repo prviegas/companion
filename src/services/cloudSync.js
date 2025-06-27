@@ -33,14 +33,7 @@ class CloudSyncService {
       if (docSnap.exists()) {
         const data = docSnap.data()
         console.log('☁️ Data loaded from cloud successfully')
-        return {
-          selectedTools: data.selectedTools || [],
-          marketLists: data.marketLists || [],
-          medicineReminders: data.medicineReminders || [],
-          medicineTaken: data.medicineTaken || {},
-          notes: data.notes || [],
-          lastSynced: data.lastSynced
-        }
+        return data
       } else {
         console.log('📄 No cloud data found, using local data')
         return null
@@ -110,6 +103,10 @@ class CloudSyncService {
         localData.notes || [], 
         cloudData.notes
       )
+    }
+
+    if (cloudData.ifoodFavorites && Array.isArray(cloudData.ifoodFavorites)) {
+      merged.ifoodFavorites = cloudData.ifoodFavorites
     }
 
     // For medicine taken data, merge objects
