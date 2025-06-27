@@ -1,6 +1,7 @@
 import './Header.css'
+import ToolSelector from './ToolSelector'
 
-function Header({ onToggleToolSelector, isSelectingTools }) {
+function Header({ onToggleToolSelector, isSelectingTools, selectedTools, onAddTool, onCloseToolSelector }) {
   return (
     <header className="header">
       <div className="header-content">
@@ -22,6 +23,14 @@ function Header({ onToggleToolSelector, isSelectingTools }) {
           </button>
         </div>
       </div>
+      
+      {isSelectingTools && (
+        <ToolSelector 
+          onAddTool={onAddTool}
+          selectedTools={selectedTools}
+          onClose={onCloseToolSelector}
+        />
+      )}
     </header>
   )
 }

@@ -29,25 +29,32 @@ function ToolSelector({ onAddTool, selectedTools, onClose }) {
     return selectedTools.some(tool => tool.id === toolId)
   }
 
+  const handleBackdropClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose()
+    }
+  }
+
   return (
-    <div className="tool-selector" id="tool-selector">
-      <div className="tool-selector-header">
-        <h2 className="tool-selector-title">Add Tools to Your Dashboard</h2>
-        <button
-          className="btn btn-secondary"
-          onClick={onClose}
-          aria-label="Close tool selector"
-        >
-          ✕
-        </button>
-      </div>
-      
-      <div className="tools-list">
-        {availableTools.map((tool) => {
-          const isSelected = isToolSelected(tool.id)
-          
-          return (
-            <div key={tool.id} className={`tool-option ${isSelected ? 'tool-selected' : ''}`}>
+    <div className="tool-selector-backdrop" onClick={handleBackdropClick}>
+      <div className="tool-selector" id="tool-selector">
+        <div className="tool-selector-header">
+          <h2 className="tool-selector-title">Add Tools to Your Dashboard</h2>
+          <button
+            className="btn btn-secondary"
+            onClick={onClose}
+            aria-label="Close tool selector"
+          >
+            ✕
+          </button>
+        </div>
+        
+        <div className="tools-list">
+          {availableTools.map((tool) => {
+            const isSelected = isToolSelected(tool.id)
+            
+            return (
+              <div key={tool.id} className={`tool-option ${isSelected ? 'tool-selected' : ''}`}>
               <div className="tool-option-content">
                 <div className="tool-option-icon">
                   <span role="img" aria-label={tool.name}>{tool.icon}</span>
@@ -85,6 +92,7 @@ function ToolSelector({ onAddTool, selectedTools, onClose }) {
           </p>
         </div>
       )}
+      </div>
     </div>
   )
 }

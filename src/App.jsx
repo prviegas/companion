@@ -58,15 +58,10 @@ function App() {
       <Header 
         onToggleToolSelector={() => setIsSelectingTools(!isSelectingTools)}
         isSelectingTools={isSelectingTools}
+        selectedTools={selectedTools}
+        onAddTool={addTool}
+        onCloseToolSelector={() => setIsSelectingTools(false)}
       />
-      
-      {isSelectingTools && (
-        <ToolSelector 
-          onAddTool={addTool}
-          selectedTools={selectedTools}
-          onClose={() => setIsSelectingTools(false)}
-        />
-      )}
       
       <MainGrid 
         tools={selectedTools}
