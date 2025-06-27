@@ -19,22 +19,19 @@
   gap: var(--spacing-lg);
 }
 
-.header-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
+.header-brand {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--spacing-md);
-  margin: 0;
+  gap: var(--spacing-sm);
 }
 
-.header-subtitle {
-  font-size: var(--font-size-lg);
-  color: var(--text-secondary);
-  margin: 0;
-  max-width: 600px;
-  font-weight: 400;
+.header-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
 }
 
 .header-actions {
@@ -44,11 +41,97 @@
   justify-content: center;
 }
 
+.header-auth {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.user-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--background-color);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.sync-icon {
+  font-size: var(--font-size-sm);
+}
+
+.sync-text {
+  font-weight: 500;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.user-email {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+}
+
+.btn-outline:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.auth-icon {
+  margin-right: var(--spacing-xs);
+}
+
 @media (min-width: 768px) {
   .header-content {
     flex-direction: row;
     justify-content: space-between;
     text-align: left;
+  }
+
+  .header-brand {
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .header-controls {
+    flex-direction: row;
+    align-items: center;
+    width: auto;
+  }
+
+  .user-menu {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .user-info {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+}
     align-items: center;
   }
   

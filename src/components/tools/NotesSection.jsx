@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './NotesSection.css'
+import { useCloudSync } from '../../hooks/useCloudSync'
 
 // Utility functions for localStorage
 const STORAGE_KEY = 'notesSection'
@@ -43,7 +44,10 @@ function NotesSection() {
   const [editingId, setEditingId] = useState(null)
   const [editingNote, setEditingNote] = useState({})
 
-  // Save notes to localStorage whenever notes changes
+  // Cloud sync for notes
+  useCloudSync('notes', notes, setNotes)
+
+  // Save notes to localStorage whenever notes changes (backup)
   useEffect(() => {
     saveNotesToStorage(notes)
   }, [notes])

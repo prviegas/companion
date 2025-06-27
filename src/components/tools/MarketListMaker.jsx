@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './MarketListMaker.css'
+import { useCloudSync } from '../../hooks/useCloudSync'
 
 // Utility functions for localStorage
 const STORAGE_KEY = 'marketListItems'
@@ -37,7 +38,10 @@ function MarketListMaker() {
   const [editingId, setEditingId] = useState(null)
   const [editingText, setEditingText] = useState('')
 
-  // Save items to localStorage whenever items changes
+  // Cloud sync for market list items
+  useCloudSync('marketLists', items, setItems)
+
+  // Save items to localStorage whenever items changes (backup)
   useEffect(() => {
     saveItemsToStorage(items)
   }, [items])

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './MedicineReminder.css'
+import { useCloudSync } from '../../hooks/useCloudSync'
 
 // Utility functions for localStorage
 const STORAGE_KEY = 'medicineReminders'
@@ -68,12 +69,16 @@ function MedicineReminder() {
     notes: ''
   })
 
-  // Save medicines to localStorage whenever medicines changes
+  // Cloud sync for medicines and taken medicines
+  useCloudSync('medicineReminders', medicines, setMedicines)
+  useCloudSync('medicineTaken', takenMedicines, setTakenMedicines)
+
+  // Save to localStorage whenever medicines changes (backup)
   useEffect(() => {
     saveMedicinesToStorage(medicines)
   }, [medicines])
 
-  // Save taken medicines to localStorage whenever takenMedicines changes
+  // Save taken medicines to localStorage whenever takenMedicines changes (backup)
   useEffect(() => {
     saveTakenToStorage(takenMedicines)
   }, [takenMedicines])

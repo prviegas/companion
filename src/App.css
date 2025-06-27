@@ -188,3 +188,39 @@ body {
 #root {
   width: 100%
 }
+
+/* Auth Required Screen */
+.auth-required {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--background-color) 0%, #e2e8f0 100%);
+}
+
+.auth-required-content {
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+}
+
+.auth-icon {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: var(--spacing-lg);
+}
+
+.auth-required-content h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.auth-required-content p {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xl);
+  font-size: var(--font-size-lg);
+  line-height: 1.6;
+}
