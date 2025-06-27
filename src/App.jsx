@@ -107,9 +107,71 @@ function AppContent() {
 
   const addTool = (tool) => {
     if (!selectedTools.find(t => t.id === tool.id)) {
-      const newTools = [...selectedTools, tool]
+      // Find the first available grid position
+      const GRID_COLS = 4
+      const GRID_ROWS = 8
+      const TOTAL_TILES = GRID_COLS * GRID_ROWS
+      
+      // Get all occupied positions
+      const occupiedPositions = new Set()
+      selectedTools.forEach((existingTool) => {
+        const position = existingTool.gridPosition !== undefined ? existingTool.gridPosition : selectedTools.indexOf(existingTool)
+        const width = existingTool.width || 2
+        const height = existingTool.height || 3
+        
+        // Mark all tiles this tool occupies
+        for (let row = 0; row < height; row++) {
+          for (let col = 0; col < width; col++) {
+            const currentRow = Math.floor(position / GRID_COLS) + row
+            const currentCol = (position % GRID_COLS) + col
+            if (currentRow < GRID_ROWS && currentCol < GRID_COLS) {
+              occupiedPositions.add(currentRow * GRID_COLS + currentCol)
+            }
+          }
+        }
+      })
+      
+      // Find first available position that can fit the new tool
+      const toolWidth = tool.width || 2
+      const toolHeight = tool.height || 3
+      let availablePosition = 0
+      
+      for (let pos = 0; pos < TOTAL_TILES; pos++) {
+        const row = Math.floor(pos / GRID_COLS)
+        const col = pos % GRID_COLS
+        
+        // Check if tool fits at this position
+        let canFit = true
+        if (row + toolHeight > GRID_ROWS || col + toolWidth > GRID_COLS) {
+          canFit = false
+        } else {
+          // Check all tiles the tool would occupy
+          for (let r = 0; r < toolHeight && canFit; r++) {
+            for (let c = 0; c < toolWidth && canFit; c++) {
+              const checkPos = (row + r) * GRID_COLS + (col + c)
+              if (occupiedPositions.has(checkPos)) {
+                canFit = false
+              }
+            }
+          }
+        }
+        
+        if (canFit) {
+          availablePosition = pos
+          break
+        }
+      }
+      
+      const newTool = {
+        ...tool,
+        gridPosition: availablePosition,
+        gridRow: Math.floor(availablePosition / GRID_COLS),
+        gridCol: availablePosition % GRID_COLS
+      }
+      
+      const newTools = [...selectedTools, newTool]
       setSelectedTools(newTools)
-      console.log('✅ Tool added:', tool.name)
+      console.log('✅ Tool added:', tool.name, 'at position:', availablePosition)
     }
   }
 
