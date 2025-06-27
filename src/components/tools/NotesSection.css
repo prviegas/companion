@@ -113,22 +113,18 @@ textarea.form-input {
 /* Priority Colors */
 .priority-high {
   border-left-color: var(--danger-color);
-  background-color: #fef2f2;
 }
 
 .priority-medium {
   border-left-color: var(--warning-color);
-  background-color: #fefbf2;
 }
 
 .priority-low {
   border-left-color: var(--success-color);
-  background-color: #f0fdf4;
 }
 
 .priority-normal {
   border-left-color: var(--primary-color);
-  background-color: #f8fafc;
 }
 
 /* Note Header */

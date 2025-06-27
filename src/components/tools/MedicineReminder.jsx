@@ -3,6 +3,7 @@ import './MedicineReminder.css'
 
 // Utility functions for localStorage
 const STORAGE_KEY = 'medicineReminders'
+const TAKEN_STORAGE_KEY = 'medicineTaken'
 
 const saveMedicinesToStorage = (medicines) => {
   try {
@@ -31,14 +32,39 @@ const loadMedicinesFromStorage = () => {
   }
 }
 
+const saveTakenToStorage = (taken) => {
+  try {
+    localStorage.setItem(TAKEN_STORAGE_KEY, JSON.stringify(taken))
+    return true
+  } catch (error) {
+    console.error('❌ Error saving taken medicines:', error)
+    return false
+  }
+}
+
+const loadTakenFromStorage = () => {
+  try {
+    const savedTaken = localStorage.getItem(TAKEN_STORAGE_KEY)
+    return savedTaken ? JSON.parse(savedTaken) : {}
+  } catch (error) {
+    console.error('❌ Error loading taken medicines:', error)
+    return {}
+  }
+}
+
+const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+const timeSlots = ['morning', 'afternoon', 'night']
+
 function MedicineReminder() {
   const [medicines, setMedicines] = useState(() => loadMedicinesFromStorage())
+  const [takenMedicines, setTakenMedicines] = useState(() => loadTakenFromStorage())
   const [showAddForm, setShowAddForm] = useState(false)
+  const [animatingPills, setAnimatingPills] = useState(new Set())
   const [newMedicine, setNewMedicine] = useState({
     name: '',
     dosage: '',
-    frequency: '',
-    time: '',
+    timeSlots: [],
+    color: '#6366f1',
     notes: ''
   })
 
@@ -47,36 +73,99 @@ function MedicineReminder() {
     saveMedicinesToStorage(medicines)
   }, [medicines])
 
+  // Save taken medicines to localStorage whenever takenMedicines changes
+  useEffect(() => {
+    saveTakenToStorage(takenMedicines)
+  }, [takenMedicines])
+
   const addMedicine = () => {
-    if (newMedicine.name.trim() && newMedicine.dosage.trim()) {
+    if (newMedicine.name.trim() && newMedicine.dosage.trim() && newMedicine.timeSlots.length > 0) {
       const medicine = {
         id: Date.now(),
-        ...newMedicine,
         name: newMedicine.name.trim(),
         dosage: newMedicine.dosage.trim(),
-        lastTaken: null,
+        timeSlots: newMedicine.timeSlots,
+        color: newMedicine.color,
+        notes: newMedicine.notes.trim(),
         createdAt: new Date().toLocaleString()
       }
       setMedicines([...medicines, medicine])
-      setNewMedicine({ name: '', dosage: '', frequency: '', time: '', notes: '' })
+      setNewMedicine({ name: '', dosage: '', timeSlots: [], color: '#6366f1', notes: '' })
       setShowAddForm(false)
     }
   }
 
   const deleteMedicine = (id) => {
     setMedicines(medicines.filter(medicine => medicine.id !== id))
+    // Also remove any taken records for this medicine
+    const newTaken = { ...takenMedicines }
+    Object.keys(newTaken).forEach(key => {
+      if (key.includes(`-${id}-`)) {
+        delete newTaken[key]
+      }
+    })
+    setTakenMedicines(newTaken)
   }
 
-  const markAsTaken = (id) => {
-    setMedicines(medicines.map(medicine =>
-      medicine.id === id
-        ? { ...medicine, lastTaken: new Date().toLocaleString() }
-        : medicine
-    ))
+  const toggleTimeSlot = (slot) => {
+    setNewMedicine(prev => ({
+      ...prev,
+      timeSlots: prev.timeSlots.includes(slot)
+        ? prev.timeSlots.filter(s => s !== slot)
+        : [...prev.timeSlots, slot]
+    }))
+  }
+
+  const toggleTaken = (medicineId, day, timeSlot) => {
+    const today = new Date()
+    const weekStart = new Date(today.setDate(today.getDate() - today.getDay() + 1)) // Monday
+    const dayDate = new Date(weekStart)
+    dayDate.setDate(weekStart.getDate() + days.indexOf(day))
+    
+    const key = `${dayDate.toDateString()}-${medicineId}-${timeSlot}`
+    const pillKey = `${medicineId}-${day}-${timeSlot}`
+    
+    // Add animation class
+    setAnimatingPills(prev => new Set(prev).add(pillKey))
+    
+    // Remove animation class after animation completes
+    setTimeout(() => {
+      setAnimatingPills(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(pillKey)
+        return newSet
+      })
+    }, 600)
+    
+    setTakenMedicines(prev => {
+      const newTaken = { ...prev }
+      if (newTaken[key]) {
+        // If already taken, remove it (untake)
+        delete newTaken[key]
+      } else {
+        // If not taken, mark as taken with timestamp
+        newTaken[key] = new Date().toLocaleString()
+      }
+      return newTaken
+    })
+  }
+
+  const isTaken = (medicineId, day, timeSlot) => {
+    const today = new Date()
+    const weekStart = new Date(today.setDate(today.getDate() - today.getDay() + 1)) // Monday
+    const dayDate = new Date(weekStart)
+    dayDate.setDate(weekStart.getDate() + days.indexOf(day))
+    
+    const key = `${dayDate.toDateString()}-${medicineId}-${timeSlot}`
+    return takenMedicines[key] || null
+  }
+
+  const getMedicinesForSlot = (day, timeSlot) => {
+    return medicines.filter(medicine => medicine.timeSlots && medicine.timeSlots.includes(timeSlot))
   }
 
   const resetForm = () => {
-    setNewMedicine({ name: '', dosage: '', frequency: '', time: '', notes: '' })
+    setNewMedicine({ name: '', dosage: '', timeSlots: [], color: '#6366f1', notes: '' })
     setShowAddForm(false)
   }
 
@@ -122,32 +211,30 @@ function MedicineReminder() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="medicine-frequency">Frequency</label>
-              <select
-                id="medicine-frequency"
-                value={newMedicine.frequency}
-                onChange={(e) => setNewMedicine({ ...newMedicine, frequency: e.target.value })}
-                className="form-input"
-              >
-                <option value="">Select frequency</option>
-                <option value="Once daily">Once daily</option>
-                <option value="Twice daily">Twice daily</option>
-                <option value="Three times daily">Three times daily</option>
-                <option value="Four times daily">Four times daily</option>
-                <option value="As needed">As needed</option>
-                <option value="Weekly">Weekly</option>
-              </select>
+              <label htmlFor="medicine-color">Pill Color</label>
+              <input
+                id="medicine-color"
+                type="color"
+                value={newMedicine.color}
+                onChange={(e) => setNewMedicine({ ...newMedicine, color: e.target.value })}
+                className="form-input color-input"
+              />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="medicine-time">Preferred Time</label>
-              <input
-                id="medicine-time"
-                type="time"
-                value={newMedicine.time}
-                onChange={(e) => setNewMedicine({ ...newMedicine, time: e.target.value })}
-                className="form-input"
-              />
+            <div className="form-group form-group-full">
+              <label>When to take *</label>
+              <div className="time-slots">
+                {timeSlots.map(slot => (
+                  <button
+                    key={slot}
+                    type="button"
+                    onClick={() => toggleTimeSlot(slot)}
+                    className={`time-slot-btn ${newMedicine.timeSlots.includes(slot) ? 'selected' : ''}`}
+                  >
+                    {slot.charAt(0).toUpperCase() + slot.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="form-group form-group-full">
@@ -167,7 +254,7 @@ function MedicineReminder() {
             <button
               onClick={addMedicine}
               className="btn btn-primary"
-              disabled={!newMedicine.name.trim() || !newMedicine.dosage.trim()}
+              disabled={!newMedicine.name.trim() || !newMedicine.dosage.trim() || newMedicine.timeSlots.length === 0}
             >
               Add Medicine
             </button>
@@ -181,55 +268,83 @@ function MedicineReminder() {
         </div>
       )}
 
-      <div className="medicines-list">
-        {medicines.length === 0 ? (
-          <div className="empty-list">
-            <span className="empty-icon">💊</span>
-            <p>No medicines added yet. Click "Add Medicine" to get started!</p>
+      {medicines.length === 0 ? (
+        <div className="empty-list">
+          <span className="empty-icon">💊</span>
+          <p>No medicines added yet. Click "Add Medicine" to create your weekly pill organizer!</p>
+        </div>
+      ) : (
+        <div className="pill-organizer">
+          <div className="organizer-header">
+            <div className="day-header"></div>
+            {timeSlots.map(slot => (
+              <div key={slot} className="time-header">
+                {slot.charAt(0).toUpperCase() + slot.slice(1)}
+              </div>
+            ))}
           </div>
-        ) : (
-          medicines.map((medicine) => (
-            <div key={medicine.id} className="medicine-card">
-              <div className="medicine-info">
-                <h4 className="medicine-name">{medicine.name}</h4>
-                <div className="medicine-details">
-                  <span className="dosage">{medicine.dosage}</span>
-                  {medicine.frequency && (
-                    <span className="frequency">{medicine.frequency}</span>
-                  )}
-                  {medicine.time && (
-                    <span className="time">⏰ {medicine.time}</span>
-                  )}
+          
+          {days.map(day => (
+            <div key={day} className="day-row">
+              <div className="day-label">{day}</div>
+              {timeSlots.map(timeSlot => (
+                <div key={`${day}-${timeSlot}`} className="pill-slot">
+                  {getMedicinesForSlot(day, timeSlot).map(medicine => {
+                    const taken = isTaken(medicine.id, day, timeSlot)
+                    const pillKey = `${medicine.id}-${day}-${timeSlot}`
+                    const isAnimating = animatingPills.has(pillKey)
+                    const wasJustTaken = taken && isAnimating
+                    const wasJustUntaken = !taken && isAnimating
+                    
+                    return (
+                      <div
+                        key={pillKey}
+                        className={`pill ${taken ? 'taken' : ''} ${wasJustUntaken ? 'untaking' : ''}`}
+                        style={{ backgroundColor: medicine.color }}
+                        onClick={() => toggleTaken(medicine.id, day, timeSlot)}
+                        title={`${medicine.name} - ${medicine.dosage}${medicine.notes ? '\n' + medicine.notes : ''}${taken ? '\nTaken: ' + taken + '\nClick to mark as not taken' : '\nClick to mark as taken'}`}
+                      >
+                        <span className="pill-label">{medicine.name.charAt(0).toUpperCase()}</span>
+                        <span className="pill-dosage">{medicine.dosage}</span>
+                      </div>
+                    )
+                  })}
                 </div>
-                {medicine.notes && (
-                  <p className="medicine-notes">{medicine.notes}</p>
-                )}
-                {medicine.lastTaken && (
-                  <p className="last-taken">
-                    Last taken: {medicine.lastTaken}
-                  </p>
-                )}
-              </div>
-
-              <div className="medicine-actions">
-                <button
-                  onClick={() => markAsTaken(medicine.id)}
-                  className="btn btn-primary btn-sm"
-                >
-                  Mark as Taken
-                </button>
-                <button
-                  onClick={() => deleteMedicine(medicine.id)}
-                  className="btn btn-danger btn-sm"
-                  aria-label={`Delete ${medicine.name}`}
-                >
-                  🗑️
-                </button>
-              </div>
+              ))}
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      )}
+
+      {medicines.length > 0 && (
+        <div className="medicine-list">
+          <h4>Your Medicines</h4>
+          {medicines.map((medicine) => (
+            <div key={medicine.id} className="medicine-summary">
+              <div className="medicine-info">
+                <div 
+                  className="medicine-color-indicator" 
+                  style={{ backgroundColor: medicine.color }}
+                ></div>
+                <div>
+                  <span className="medicine-name">{medicine.name}</span>
+                  <span className="medicine-dosage">{medicine.dosage}</span>
+                  <span className="medicine-schedule">
+                    {medicine.timeSlots ? medicine.timeSlots.join(', ') : 'No schedule set'}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => deleteMedicine(medicine.id)}
+                className="btn btn-danger btn-sm"
+                aria-label={`Delete ${medicine.name}`}
+              >
+                🗑️
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
