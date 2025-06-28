@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import './GoogleCalendar.css'
+import { useCloudSync } from '../../hooks/useCloudSync'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCalendarAlt, faCog, faExternalLinkAlt, faPlus, faTimes, faEdit } from '@fortawesome/free-solid-svg-icons'
 
@@ -59,17 +60,39 @@ const loadSettingsFromStorage = () => {
   }
 }
 
-function GoogleCalendar() {
-  const [settings, setSettings] = useState(() => loadSettingsFromStorage())
+function GoogleCalendar({ isReadOnly = false, sharedToolData = null }) {
+  // Use shared data if available, otherwise load from storage/cloud
+  const [settings, setSettings] = useState(() => {
+    if (sharedToolData?.googleCalendarSettings) {
+      console.log('📅 GoogleCalendar using shared calendar data:', sharedToolData.googleCalendarSettings)
+      return sharedToolData.googleCalendarSettings
+    }
+    return loadSettingsFromStorage()
+  })
+  
   const [showSettings, setShowSettings] = useState(false)
   const [newCalendarId, setNewCalendarId] = useState('')
   const [newCalendarName, setNewCalendarName] = useState('')
   const [editingCalendarId, setEditingCalendarId] = useState(null)
 
-  // Save settings to localStorage whenever settings change
+  // Cloud sync for calendar settings (only when not using shared data)
+  const shouldUseCloudSync = !sharedToolData
+  useCloudSync(shouldUseCloudSync ? 'googleCalendarSettings' : null, shouldUseCloudSync ? settings : null, shouldUseCloudSync ? setSettings : null)
+
+  // Update settings when shared data changes
   useEffect(() => {
-    saveSettingsToStorage(settings)
-  }, [settings])
+    if (sharedToolData?.googleCalendarSettings) {
+      console.log('📅 GoogleCalendar updating with shared calendar data:', sharedToolData.googleCalendarSettings)
+      setSettings(sharedToolData.googleCalendarSettings)
+    }
+  }, [sharedToolData])
+
+  // Save settings to localStorage whenever settings change (backup, only when not using shared data)
+  useEffect(() => {
+    if (!sharedToolData) {
+      saveSettingsToStorage(settings)
+    }
+  }, [settings, sharedToolData])
 
   // Get active calendar
   const activeCalendar = settings.calendars?.find(cal => cal.id === settings.activeCalendarId)
@@ -168,15 +191,18 @@ function GoogleCalendar() {
         <div className="calendar-title">
           <FontAwesomeIcon icon={faCalendarAlt} />
           <h3>Google Calendar</h3>
+          {isReadOnly && <span className="read-only-badge">👁️ Read-only</span>}
         </div>
         <div className="calendar-actions">
-          <button
-            className="settings-btn"
-            onClick={() => setShowSettings(!showSettings)}
-            title="Calendar Settings"
-          >
-            <FontAwesomeIcon icon={faCog} />
-          </button>
+          {!isReadOnly && (
+            <button
+              className="settings-btn"
+              onClick={() => setShowSettings(!showSettings)}
+              title="Calendar Settings"
+            >
+              <FontAwesomeIcon icon={faCog} />
+            </button>
+          )}
           {calendarUrl && (
             <a
               href={calendarUrl}
@@ -201,29 +227,33 @@ function GoogleCalendar() {
               onClick={() => switchCalendar(calendar.id)}
             >
               <span className="tab-name">{calendar.name}</span>
-              <button
-                className="tab-remove"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  removeCalendar(calendar.id)
-                }}
-                title="Remove calendar"
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
+              {!isReadOnly && (
+                <button
+                  className="tab-remove"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    removeCalendar(calendar.id)
+                  }}
+                  title="Remove calendar"
+                >
+                  <FontAwesomeIcon icon={faTimes} />
+                </button>
+              )}
             </div>
           ))}
-          <button
-            className="add-calendar-tab"
-            onClick={() => setShowSettings(true)}
-            title="Add calendar"
-          >
-            <FontAwesomeIcon icon={faPlus} />
-          </button>
+          {!isReadOnly && (
+            <button
+              className="add-calendar-tab"
+              onClick={() => setShowSettings(true)}
+              title="Add calendar"
+            >
+              <FontAwesomeIcon icon={faPlus} />
+            </button>
+          )}
         </div>
       )}
 
-      {showSettings && (
+      {showSettings && !isReadOnly && (
         <div className="calendar-settings">
           <div className="settings-section">
             <h4>Add New Calendar</h4>
@@ -348,14 +378,20 @@ function GoogleCalendar() {
             <div className="setup-message">
               <FontAwesomeIcon icon={faCalendarAlt} className="setup-icon" />
               <h4>Set up your Google Calendars</h4>
-              <p>Click the settings button above to add your first Google Calendar.</p>
-              <button
-                className="setup-btn"
-                onClick={() => setShowSettings(true)}
-              >
-                <FontAwesomeIcon icon={faCog} />
-                Add Calendar
-              </button>
+              {isReadOnly ? (
+                <p>No calendars have been configured yet.</p>
+              ) : (
+                <>
+                  <p>Click the settings button above to add your first Google Calendar.</p>
+                  <button
+                    className="setup-btn"
+                    onClick={() => setShowSettings(true)}
+                  >
+                    <FontAwesomeIcon icon={faCog} />
+                    Add Calendar
+                  </button>
+                </>
+              )}
             </div>
           </div>
         ) : (
