@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import './GoogleCalendar.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCalendarAlt, faCog, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
+import { faCalendarAlt, faCog, faExternalLinkAlt, faPlus, faTimes, faEdit } from '@fortawesome/free-solid-svg-icons'
 
 // Utility functions for localStorage
 const STORAGE_KEY = 'googleCalendarSettings'
@@ -23,23 +23,65 @@ const loadSettingsFromStorage = () => {
     if (savedSettings) {
       const parsedSettings = JSON.parse(savedSettings)
       console.log('📅 Calendar settings loaded successfully')
+      
+      // Migrate old single calendar format to new multiple calendar format
+      if (parsedSettings.calendarId && !parsedSettings.calendars) {
+        return {
+          calendars: parsedSettings.calendarId ? [{
+            id: Date.now().toString(),
+            calendarId: parsedSettings.calendarId,
+            name: 'My Calendar',
+            showWeekends: parsedSettings.showWeekends || true,
+            showTitle: parsedSettings.showTitle || true,
+            showNav: parsedSettings.showNav || true,
+            showDate: parsedSettings.showDate || true,
+            showTabs: parsedSettings.showTabs || true,
+            showCalendarList: parsedSettings.showCalendarList || false,
+            mode: parsedSettings.mode || 'WEEK'
+          }] : [],
+          activeCalendarId: parsedSettings.calendarId ? Date.now().toString() : null
+        }
+      }
+      
       return parsedSettings
     }
     console.log('📅 No saved calendar settings found')
     return {
-      calendarId: '',
-      showWeekends: true,
-      showTitle: true,
-      showNav: true,
-      showDate: true,
-      showTabs: true,
-      showCalendarList: false,
-      mode: 'WEEK' // WEEK, MONTH, AGENDA
+      calendars: [],
+      activeCalendarId: null
     }
   } catch (error) {
     console.error('❌ Error loading calendar settings:', error)
     return {
-      calendarId: '',
+      calendars: [],
+      activeCalendarId: null
+    }
+  }
+}
+
+function GoogleCalendar() {
+  const [settings, setSettings] = useState(() => loadSettingsFromStorage())
+  const [showSettings, setShowSettings] = useState(false)
+  const [newCalendarId, setNewCalendarId] = useState('')
+  const [newCalendarName, setNewCalendarName] = useState('')
+  const [editingCalendarId, setEditingCalendarId] = useState(null)
+
+  // Save settings to localStorage whenever settings change
+  useEffect(() => {
+    saveSettingsToStorage(settings)
+  }, [settings])
+
+  // Get active calendar
+  const activeCalendar = settings.calendars?.find(cal => cal.id === settings.activeCalendarId)
+
+  // Add a new calendar
+  const addCalendar = () => {
+    if (!newCalendarId.trim() || !newCalendarName.trim()) return
+
+    const newCalendar = {
+      id: Date.now().toString(),
+      calendarId: newCalendarId.trim(),
+      name: newCalendarName.trim(),
       showWeekends: true,
       showTitle: true,
       showNav: true,
@@ -48,62 +90,77 @@ const loadSettingsFromStorage = () => {
       showCalendarList: false,
       mode: 'WEEK'
     }
+
+    setSettings(prev => ({
+      ...prev,
+      calendars: [...(prev.calendars || []), newCalendar],
+      activeCalendarId: prev.calendars?.length === 0 ? newCalendar.id : prev.activeCalendarId
+    }))
+
+    setNewCalendarId('')
+    setNewCalendarName('')
   }
-}
 
-function GoogleCalendar() {
-  const [settings, setSettings] = useState(() => loadSettingsFromStorage())
-  const [showSettings, setShowSettings] = useState(false)
-  const [tempCalendarId, setTempCalendarId] = useState(settings.calendarId)
+  // Remove a calendar
+  const removeCalendar = (calendarId) => {
+    setSettings(prev => {
+      const newCalendars = prev.calendars.filter(cal => cal.id !== calendarId)
+      return {
+        ...prev,
+        calendars: newCalendars,
+        activeCalendarId: prev.activeCalendarId === calendarId 
+          ? (newCalendars.length > 0 ? newCalendars[0].id : null)
+          : prev.activeCalendarId
+      }
+    })
+  }
 
-  // Save settings to localStorage whenever settings change
-  useEffect(() => {
-    saveSettingsToStorage(settings)
-  }, [settings])
+  // Update calendar settings
+  const updateCalendar = (calendarId, updates) => {
+    setSettings(prev => ({
+      ...prev,
+      calendars: prev.calendars.map(cal => 
+        cal.id === calendarId ? { ...cal, ...updates } : cal
+      )
+    }))
+  }
+
+  // Switch active calendar
+  const switchCalendar = (calendarId) => {
+    setSettings(prev => ({
+      ...prev,
+      activeCalendarId: calendarId
+    }))
+  }
 
   // Generate the Google Calendar embed URL
-  const generateCalendarUrl = () => {
-    if (!settings.calendarId) {
+  const generateCalendarUrl = (calendar) => {
+    if (!calendar || !calendar.calendarId) {
       return null
     }
 
     const baseUrl = 'https://calendar.google.com/calendar/embed'
     const params = new URLSearchParams({
-      src: settings.calendarId,
+      src: calendar.calendarId,
       ctz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      mode: settings.mode,
-      showTitle: settings.showTitle ? '1' : '0',
-      showNav: settings.showNav ? '1' : '0',
-      showDate: settings.showDate ? '1' : '0',
-      showTabs: settings.showTabs ? '1' : '0',
-      showCalendarList: settings.showCalendarList ? '1' : '0',
+      mode: calendar.mode,
+      showTitle: calendar.showTitle ? '1' : '0',
+      showNav: calendar.showNav ? '1' : '0',
+      showDate: calendar.showDate ? '1' : '0',
+      showTabs: calendar.showTabs ? '1' : '0',
+      showCalendarList: calendar.showCalendarList ? '1' : '0',
       wkst: '1', // Week starts on Sunday
       bgcolor: '%23ffffff'
     })
 
-    if (!settings.showWeekends) {
+    if (!calendar.showWeekends) {
       params.append('showWkEnd', '0')
     }
 
     return `${baseUrl}?${params.toString()}`
   }
 
-  const handleSaveSettings = () => {
-    setSettings(prev => ({
-      ...prev,
-      calendarId: tempCalendarId
-    }))
-    setShowSettings(false)
-  }
-
-  const handleSettingChange = (key, value) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }))
-  }
-
-  const calendarUrl = generateCalendarUrl()
+  const calendarUrl = generateCalendarUrl(activeCalendar)
 
   return (
     <div className="google-calendar">
@@ -134,16 +191,58 @@ function GoogleCalendar() {
         </div>
       </div>
 
+      {/* Calendar Tabs */}
+      {settings.calendars && settings.calendars.length > 0 && (
+        <div className="calendar-tabs">
+          {settings.calendars.map(calendar => (
+            <div
+              key={calendar.id}
+              className={`calendar-tab ${settings.activeCalendarId === calendar.id ? 'active' : ''}`}
+              onClick={() => switchCalendar(calendar.id)}
+            >
+              <span className="tab-name">{calendar.name}</span>
+              <button
+                className="tab-remove"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  removeCalendar(calendar.id)
+                }}
+                title="Remove calendar"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+          ))}
+          <button
+            className="add-calendar-tab"
+            onClick={() => setShowSettings(true)}
+            title="Add calendar"
+          >
+            <FontAwesomeIcon icon={faPlus} />
+          </button>
+        </div>
+      )}
+
       {showSettings && (
         <div className="calendar-settings">
           <div className="settings-section">
-            <h4>Calendar Setup</h4>
+            <h4>Add New Calendar</h4>
+            <div className="setting-item">
+              <label>Calendar Name:</label>
+              <input
+                type="text"
+                value={newCalendarName}
+                onChange={(e) => setNewCalendarName(e.target.value)}
+                placeholder="e.g., Work Calendar, Personal"
+                className="calendar-name-input"
+              />
+            </div>
             <div className="setting-item">
               <label>Google Calendar ID:</label>
               <input
                 type="text"
-                value={tempCalendarId}
-                onChange={(e) => setTempCalendarId(e.target.value)}
+                value={newCalendarId}
+                onChange={(e) => setNewCalendarId(e.target.value)}
                 placeholder="your-email@gmail.com or calendar-id"
                 className="calendar-id-input"
               />
@@ -151,96 +250,111 @@ function GoogleCalendar() {
                 Enter your Google Calendar ID or email address. For public calendars, you can find the Calendar ID in Google Calendar settings.
               </small>
             </div>
-            <button className="save-btn" onClick={handleSaveSettings}>
-              Save Calendar
+            <button 
+              className="save-btn" 
+              onClick={addCalendar}
+              disabled={!newCalendarId.trim() || !newCalendarName.trim()}
+            >
+              Add Calendar
             </button>
           </div>
 
-          <div className="settings-section">
-            <h4>Display Options</h4>
-            <div className="setting-item">
-              <label>View Mode:</label>
-              <select
-                value={settings.mode}
-                onChange={(e) => handleSettingChange('mode', e.target.value)}
-              >
-                <option value="WEEK">Week View</option>
-                <option value="MONTH">Month View</option>
-                <option value="AGENDA">Agenda View</option>
-              </select>
-            </div>
-
-            <div className="setting-item checkbox-item">
-              <label>
+          {activeCalendar && (
+            <div className="settings-section">
+              <h4>Calendar Settings - {activeCalendar.name}</h4>
+              <div className="setting-item">
+                <label>Calendar Name:</label>
                 <input
-                  type="checkbox"
-                  checked={settings.showWeekends}
-                  onChange={(e) => handleSettingChange('showWeekends', e.target.checked)}
+                  type="text"
+                  value={activeCalendar.name}
+                  onChange={(e) => updateCalendar(activeCalendar.id, { name: e.target.value })}
+                  className="calendar-name-input"
                 />
-                Show Weekends
-              </label>
-            </div>
+              </div>
+              <div className="setting-item">
+                <label>View Mode:</label>
+                <select
+                  value={activeCalendar.mode}
+                  onChange={(e) => updateCalendar(activeCalendar.id, { mode: e.target.value })}
+                >
+                  <option value="WEEK">Week View</option>
+                  <option value="MONTH">Month View</option>
+                  <option value="AGENDA">Agenda View</option>
+                </select>
+              </div>
 
-            <div className="setting-item checkbox-item">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={settings.showTitle}
-                  onChange={(e) => handleSettingChange('showTitle', e.target.checked)}
-                />
-                Show Title
-              </label>
-            </div>
+              <div className="setting-item checkbox-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={activeCalendar.showWeekends}
+                    onChange={(e) => updateCalendar(activeCalendar.id, { showWeekends: e.target.checked })}
+                  />
+                  Show Weekends
+                </label>
+              </div>
 
-            <div className="setting-item checkbox-item">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={settings.showNav}
-                  onChange={(e) => handleSettingChange('showNav', e.target.checked)}
-                />
-                Show Navigation
-              </label>
-            </div>
+              <div className="setting-item checkbox-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={activeCalendar.showTitle}
+                    onChange={(e) => updateCalendar(activeCalendar.id, { showTitle: e.target.checked })}
+                  />
+                  Show Title
+                </label>
+              </div>
 
-            <div className="setting-item checkbox-item">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={settings.showDate}
-                  onChange={(e) => handleSettingChange('showDate', e.target.checked)}
-                />
-                Show Date
-              </label>
-            </div>
+              <div className="setting-item checkbox-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={activeCalendar.showNav}
+                    onChange={(e) => updateCalendar(activeCalendar.id, { showNav: e.target.checked })}
+                  />
+                  Show Navigation
+                </label>
+              </div>
 
-            <div className="setting-item checkbox-item">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={settings.showTabs}
-                  onChange={(e) => handleSettingChange('showTabs', e.target.checked)}
-                />
-                Show Tabs
-              </label>
+              <div className="setting-item checkbox-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={activeCalendar.showDate}
+                    onChange={(e) => updateCalendar(activeCalendar.id, { showDate: e.target.checked })}
+                  />
+                  Show Date
+                </label>
+              </div>
+
+              <div className="setting-item checkbox-item">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={activeCalendar.showTabs}
+                    onChange={(e) => updateCalendar(activeCalendar.id, { showTabs: e.target.checked })}
+                  />
+                  Show Tabs
+                </label>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
       <div className="calendar-content">
-        {!settings.calendarId ? (
+        {!settings.calendars || settings.calendars.length === 0 ? (
           <div className="calendar-setup">
             <div className="setup-message">
               <FontAwesomeIcon icon={faCalendarAlt} className="setup-icon" />
-              <h4>Set up your Google Calendar</h4>
-              <p>Click the settings button above to connect your Google Calendar.</p>
+              <h4>Set up your Google Calendars</h4>
+              <p>Click the settings button above to add your first Google Calendar.</p>
               <button
                 className="setup-btn"
                 onClick={() => setShowSettings(true)}
               >
                 <FontAwesomeIcon icon={faCog} />
-                Configure Calendar
+                Add Calendar
               </button>
             </div>
           </div>
@@ -251,7 +365,7 @@ function GoogleCalendar() {
               className="calendar-iframe"
               frameBorder="0"
               scrolling="no"
-              title="Google Calendar"
+              title={`Google Calendar - ${activeCalendar?.name || 'Calendar'}`}
             />
           </div>
         )}
