@@ -140,7 +140,7 @@ textarea.form-input {
 
 .organizer-header {
   display: grid;
-  grid-template-columns: 120px repeat(3, 1fr);
+  grid-template-columns: 120px repeat(var(--time-columns, 3), 1fr);
   background-color: var(--background-color);
   border-bottom: 2px solid var(--border-color);
 }
@@ -168,7 +168,7 @@ textarea.form-input {
 
 .day-row {
   display: grid;
-  grid-template-columns: 120px repeat(3, 1fr);
+  grid-template-columns: 120px repeat(var(--time-columns, 3), 1fr);
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -554,7 +554,7 @@ textarea.form-input {
   /* Optimize pill organizer for full width */
   .organizer-header,
   .day-row {
-    grid-template-columns: 100px repeat(3, 1fr);
+    grid-template-columns: 100px repeat(var(--time-columns, 3), 1fr);
   }
   
   .day-label,
@@ -627,7 +627,7 @@ textarea.form-input {
   /* Make pill organizer more compact on small screens */
   .organizer-header,
   .day-row {
-    grid-template-columns: 80px repeat(3, 1fr);
+    grid-template-columns: 80px repeat(var(--time-columns, 3), 1fr);
   }
   
   .day-label,

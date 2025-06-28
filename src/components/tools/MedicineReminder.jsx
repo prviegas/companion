@@ -211,6 +211,24 @@ function MedicineReminder({ isReadOnly = false, sharedToolData = null }) {
     return medicines.filter(medicine => medicine.timeSlots && medicine.timeSlots.includes(timeSlot))
   }
 
+  // Get only time slots that have medicines scheduled
+  const getActiveTimeSlots = () => {
+    const activeSlots = new Set()
+    medicines.forEach(medicine => {
+      if (medicine.timeSlots) {
+        medicine.timeSlots.forEach(slot => {
+          if (timeSlots.includes(slot)) {
+            activeSlots.add(slot)
+          }
+        })
+      }
+    })
+    // Return slots in the original order
+    return timeSlots.filter(slot => activeSlots.has(slot))
+  }
+
+  const activeTimeSlots = getActiveTimeSlots()
+
   return (
     <div className="medicine-reminder">
       <div className="medicine-header">
@@ -248,10 +266,13 @@ function MedicineReminder({ isReadOnly = false, sharedToolData = null }) {
           <p>No medicines added yet. Click "Manage Medicine" to create your weekly pill organizer!</p>
         </div>
       ) : (
-        <div className="pill-organizer">
+        <div 
+          className="pill-organizer"
+          style={{ '--time-columns': activeTimeSlots.length }}
+        >
           <div className="organizer-header">
             <div className="day-header"></div>
-            {timeSlots.map(slot => (
+            {activeTimeSlots.map(slot => (
               <div 
                 key={slot} 
                 className={`time-header ${slot === currentTimeSlot ? 'current-time' : ''}`}
@@ -268,7 +289,7 @@ function MedicineReminder({ isReadOnly = false, sharedToolData = null }) {
                 {day}
                 {day === currentDay && <span className="current-indicator"> ●</span>}
               </div>
-              {timeSlots.map(timeSlot => {
+              {activeTimeSlots.map(timeSlot => {
                 const isCurrentSlot = day === currentDay && timeSlot === currentTimeSlot
                 return (
                   <div 
