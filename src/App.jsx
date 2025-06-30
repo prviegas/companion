@@ -399,14 +399,13 @@ function AppContent() {
   const exitSharedBoard = () => {
     console.log('🔄 Exiting shared board mode...')
     
-    // Remove share parameter from URL
+    // Remove share parameter from URL and force immediate page refresh
     const url = new URL(window.location)
     url.searchParams.delete('shared')
-    window.history.replaceState({}, '', url)
     
-    // Force page refresh to completely reset state and load user's own data
+    // Force hard refresh by navigating to the clean URL
     console.log('🔄 Refreshing page to load user\'s own data...')
-    window.location.reload()
+    window.location.href = url.toString()
   }
 
   // Show loading screen while checking authentication (but not for shared boards)
