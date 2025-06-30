@@ -54,12 +54,12 @@ function AppContent() {
   
   const { user, isAuthenticated, loading } = useAuth()
 
-  // Load user data when authenticated
+  // Load user data when authenticated (but not when viewing shared board)
   useEffect(() => {
-    if (isAuthenticated && user && !dataLoaded) {
+    if (isAuthenticated && user && !dataLoaded && !isViewingSharedBoard) {
       loadUserData()
     }
-  }, [isAuthenticated, user, dataLoaded])
+  }, [isAuthenticated, user, dataLoaded, isViewingSharedBoard])
 
   // Check for shared board in URL on component mount
   useEffect(() => {
@@ -73,6 +73,8 @@ function AppContent() {
     
     if (shareId) {
       console.log('📋 Found shared board parameter, loading:', shareId)
+      // Set viewing shared board immediately to prevent personal data loading
+      setIsViewingSharedBoard(true)
       // Load shared board immediately, regardless of authentication status
       loadSharedBoard(shareId)
     } else {
@@ -89,6 +91,16 @@ function AppContent() {
 
   const loadUserData = async () => {
     if (!user) return
+    
+    // Check URL for shared board parameter to prevent loading personal data
+    const urlParams = new URLSearchParams(window.location.search)
+    const shareId = urlParams.get('shared')
+    
+    // Don't load user data if we're viewing a shared board OR if there's a share parameter in URL
+    if (isViewingSharedBoard || shareId) {
+      console.log('⏸️ Skipping user data load - viewing shared board or share parameter detected')
+      return
+    }
 
     setSyncStatus('syncing')
     try {
@@ -137,6 +149,12 @@ function AppContent() {
 
   const saveUserData = async () => {
     if (!user || !dataLoaded) return
+    
+    // Don't save user data if we're viewing a shared board
+    if (isViewingSharedBoard) {
+      console.log('⏸️ Skipping user data save - viewing shared board')
+      return
+    }
 
     try {
       setSyncStatus('syncing')
