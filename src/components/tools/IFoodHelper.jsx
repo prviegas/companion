@@ -143,8 +143,8 @@ function IFoodHelper({ isReadOnly = false, sharedToolData = null }) {
 
   // Save favorites to database
   const saveFavorites = async (favoritesToSave) => {
-    if (!isAuthenticated || !user) {
-      console.log('🍔 User not authenticated, skipping save')
+    if (!isAuthenticated || !user || sharedToolData) {
+      console.log('🍔 Skipping save - not authenticated, no user, or using shared data')
       return
     }
 
@@ -159,8 +159,8 @@ function IFoodHelper({ isReadOnly = false, sharedToolData = null }) {
 
   // Save favorite dishes to database
   const saveFavoriteDishes = async (dishesToSave) => {
-    if (!isAuthenticated || !user) {
-      console.log('🍕 User not authenticated, skipping save')
+    if (!isAuthenticated || !user || sharedToolData) {
+      console.log('🍕 Skipping save - not authenticated, no user, or using shared data')
       return
     }
 

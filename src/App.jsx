@@ -399,26 +399,14 @@ function AppContent() {
   const exitSharedBoard = () => {
     console.log('🔄 Exiting shared board mode...')
     
-    setIsViewingSharedBoard(false)
-    setSharedBoardData(null)
-    setSharedBoardOwner('')
-    setSharedToolData(null) // Clear shared tool data
-    
     // Remove share parameter from URL
     const url = new URL(window.location)
     url.searchParams.delete('shared')
     window.history.replaceState({}, '', url)
     
-    // Reload user's own data
-    if (isAuthenticated && user) {
-      console.log('🔄 Reloading user\'s own data...')
-      loadUserData()
-    } else {
-      // If not authenticated, just clear the tools
-      setSelectedTools([])
-    }
-    
-    console.log('✅ Exited shared board mode successfully')
+    // Force page refresh to completely reset state and load user's own data
+    console.log('🔄 Refreshing page to load user\'s own data...')
+    window.location.reload()
   }
 
   // Show loading screen while checking authentication (but not for shared boards)
